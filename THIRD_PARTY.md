@@ -55,6 +55,9 @@ copy of this file.
 | `tokio` | MIT | Async reply channels for the store actor (Tauri provides the runtime) |
 | `log` | MIT OR Apache-2.0 | Diagnostics (never logs clipboard content) |
 | `tauri-plugin-log` | MIT OR Apache-2.0 | Log file + stdout, so capture failures are visible in release |
+| `tauri-plugin-global-shortcut` | MIT OR Apache-2.0 | Register/rebind the global palette shortcut |
+| `tauri-plugin-single-instance` | MIT OR Apache-2.0 | One process; second launch reveals the palette |
+| `tauri-plugin-autostart` | MIT OR Apache-2.0 | Launch at login (registry / LaunchAgent / XDG autostart) |
 | `clipboard-rs` | MIT | Clipboard watch/read on all desktop platforms (no image feature) |
 | `windows-sys` | MIT OR Apache-2.0 | Win32 foreground process, window title, clipboard format DWORDs |
 | `x11rb` | MIT OR Apache-2.0 | X11 `_NET_ACTIVE_WINDOW`, `_NET_WM_PID`, `WM_CLASS` |

@@ -37,6 +37,16 @@ npm run tauri dev -- -- --show
 Without `--show`, the app runs with no visible window until the global hotkey
 lands in M1-09; this is intentional pre-warm behaviour, not a failed launch.
 
+### Hotkey and tray
+
+- Default shortcut: `CommandOrControl+Shift+Space`. If it is already taken,
+  Copyfie opens with a blocking recorder and will not silently pick another
+  chord. The replacement is saved to `settings.json` in the app data directory.
+- Tray menu: **Show palette**, **Pause capture**, **Start at login**, **Quit**.
+  Left-clicking the tray icon also shows the palette.
+- Launch at login is **off by default**; the tray menu toggles it.
+- A second launch forwards to the running instance and reveals the palette.
+
 Rust:
 
 ```sh

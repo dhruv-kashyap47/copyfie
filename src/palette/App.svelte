@@ -5,10 +5,12 @@
   import {
     deleteItem,
     hidePalette,
+    hotkeyStatus as fetchHotkeyStatus,
     listHistory,
     pasteItem,
     pinItem,
     searchHistory,
+    type HotkeyStatus,
   } from "../lib/ipc";
   import { filterItems } from "../lib/localSearch";
   import { mapKey, moveSelection } from "../lib/keymap";
@@ -17,6 +19,7 @@
 
   import FilterBar from "./FilterBar.svelte";
   import Footer from "./Footer.svelte";
+  import HotkeySetup from "./HotkeySetup.svelte";
   import ResultList from "./ResultList.svelte";
   import SearchBar from "./SearchBar.svelte";
 
@@ -33,6 +36,8 @@
   let errorMessage = $state<string | null>(null);
   let toast = $state<string | null>(null);
   let composing = $state(false);
+  let hotkey = $state<HotkeyStatus | null>(null);
+  let hotkeyBlocked = $state(false);
 
   let toastTimer: ReturnType<typeof setTimeout> | undefined;
   let searchRequest = 0;
@@ -75,6 +80,18 @@
       }
       status = "error";
       errorMessage = describe(cause);
+    }
+  }
+
+  async function refreshHotkey() {
+    try {
+      const status = await fetchHotkeyStatus();
+      hotkey = status;
+      // Only a finished, failed registration is a conflict. Before the startup
+      // attempt, "not registered" is expected.
+      hotkeyBlocked = status.initialized && !status.registered;
+    } catch {
+      // Hotkey status is advisory here; never block the palette on it.
     }
   }
 
@@ -138,6 +155,7 @@
 
   onMount(() => {
     void refresh();
+    void refreshHotkey();
 
     const focusInput = () => {
       document.getElementById("search-input")?.focus();
@@ -170,6 +188,7 @@
       selected = 0;
       toast = null;
       void refresh();
+      void refreshHotkey();
       requestAnimationFrame(() => {
         document.getElementById("search-input")?.focus();
       });
@@ -273,6 +292,11 @@
   }
 
   function onKeydown(event: KeyboardEvent) {
+    if (hotkeyBlocked) {
+      // The setup overlay owns the keyboard; its recorder stops propagation.
+      return;
+    }
+
     const action = mapKey(event, { query, isComposing: composing });
     if (action.type === "none") {
       return;
@@ -346,6 +370,17 @@
   />
 
   <Footer count={visible.length} {toast} {modifier} />
+
+  {#if hotkeyBlocked && hotkey}
+    <HotkeySetup
+      configured={hotkey.configured}
+      onSaved={(accelerator) => {
+        hotkey = { configured: accelerator, registered: true, initialized: true };
+        hotkeyBlocked = false;
+        requestAnimationFrame(() => document.getElementById("search-input")?.focus());
+      }}
+    />
+  {/if}
 </main>
 
 <style>
@@ -354,6 +389,7 @@
     flex-direction: column;
     height: 100%;
     background: var(--bg);
+    position: relative;
   }
 
   .top {

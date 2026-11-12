@@ -439,3 +439,56 @@ PLAN §7 lists `Ctrl+P`/`Ctrl+N` as arrow alternatives and also `Cmd/Ctrl+P` as 
 ### Next up
 
 - **M1-09** — hotkey + first-run conflict detection + rebind + tray + single instance + autostart.
+
+---
+
+## 2026-11-12 — Session 10 (Milestone 1, M1-09)
+
+**Scope:** M1-09 — global hotkey, first-run conflict detection, rebind, tray, single instance, autostart.
+
+### Done
+
+- **Settings store (`settings.rs`):** `settings.json` in the app data root with `version` + `hotkey`, unknown fields preserved, atomic temp-file → fsync → rename writes, `.bak` of the previous version, and a broken file is never overwritten (defaults are used in memory). Five unit tests.
+- **Hotkey manager (`hotkey.rs`):** parses `CommandOrControl` accelerators through the plugin, tracks the configured chord, and rebinds **transactionally** — the new chord must register before the old one is released. An `initialized` flag distinguishes “registration has not run yet” from “registration failed”, so the pre-warmed UI never flashes the conflict overlay.
+- **Global shortcut plugin:** handler shows the palette on key press; the saved shortcut is registered during setup. Success and conflict are both logged (ids only, no content).
+- **Conflict UI (`HotkeySetup.svelte` + `lib/hotkey.ts`):** blocking storage-agnostic overlay showing the conflicting chord, a chord recorder (modifier required; modifier-only presses ignored), validation from the backend, and a save action. Escape is intentionally ignored while blocked. Seven frontend tests cover building and formatting accelerators.
+- **Tray (`tray.rs`):** **Show palette**, **Pause capture** (check item, shared `CaptureConfig`), **Start at login** (check item reflecting the autostart plugin), separator, **Quit**. Left-clicking the icon shows the palette.
+- **Single instance:** plugin registered first; a second launch exits and reveals/focuses the palette in the running process.
+- **Autostart:** plugin initialized with `MacosLauncher::LaunchAgent` and `--hidden`; **off by default**, toggled from the tray.
+- **State wiring:** `AppState` now owns the capture config, hotkey manager, and settings store; the capture runner and tray share one config instance.
+
+### Verification
+
+- **Default hotkey:** launched hidden (no `--show`), pressed `Ctrl+Shift+Space` → log `global shortcut registered` + `palette shown (open_id=1)`, palette visible on the cursor monitor and **focused**.
+- **Conflict:** a helper process held `Ctrl+Shift+Space` via `RegisterHotKey`; Copyfie logged the conflict and **automatically opened the palette** with the blocking overlay (“Shortcut unavailable”, conflicting chord, recorder, Save).
+- **Rebind:** recorded `Ctrl+Shift+F9` in the overlay (recorder value verified via UIA), clicked **Use this shortcut** → log `shortcut registered`, overlay gone, `settings.json` contains `"hotkey": "CommandOrControl+Shift+F9"`. The new chord opened/focused the palette; the old one was still held by the helper.
+- **Persistence + default restore:** reset `settings.json` to the default, restarted hidden → `global shortcut registered` and the default chord opened/focused the palette.
+- **Single instance:** second process exited with code 0, process count stayed 1, and the running palette was shown/focused.
+- **Autostart:** no `HKCU\...\Run` entry by default (correct opt-in state).
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` (14 suites), `npm run check`, `npm test` (**29**), `npm run build` (**25.3 KB gz**), `cargo deny` → all clean.
+
+### Decisions
+
+- **Persist only the shortcut for now.** M1-10 extends the same `Settings` struct; unknown fields are preserved so nothing written later is lost.
+- **Blocking rebind, no silent alternative.** If the default is taken, the user must choose; Escape does not dismiss the setup.
+- **A modifier is required** in the recorder (Ctrl/⌘ or Alt), so plain typing can never become a global shortcut.
+- **Autostart is opt-in** (plan example shows `true`, but an app that self-registers before the user asks is hostile). The tray check item reflects reality.
+- **Pause is intentionally in-memory** until M1-10/M2-09 adds `capture_paused` to settings.
+- **Debug-build console windows** make `Process.MainWindowHandle` unreliable in automation; focus was verified against the “Copyfie” Tauri window found through UI Automation. Release builds have no console.
+
+### Measurements
+
+- Frontend bundle: **25.3 KB gzipped** (JS 24.0 + CSS 2.2; 50 KB budget).
+- Hotkey → palette shown and focused in under ~2 s including the test’s fixed sleep; no dedicated open-time metrics yet (M1-11).
+- No RSS measurement yet (M1-12).
+
+### Notes / follow-ups
+
+- Tray menu clicks and the autostart toggle were **not automated**; add them to the M1-13 manual matrix.
+- Stale autostart path repair (risk #30) is deferred; revisit with M2-09/M2-21.
+- `SendKeys` does not accept `{SPACE}`; automation must send a literal space (`"^+ "`).
+- The conflict helper and all test logs were removed; `settings.json` is back to the default shortcut.
+
+### Next up
+
+- **M1-10** — minimal settings + theme: full settings window/tab, hotkey recorder in settings, history length, launch at login, pause, theme tokens, About.

@@ -1,0 +1,201 @@
+//! Minimal settings file (`settings.json`).
+//!
+//! M1-09 needs exactly one persisted value: the global shortcut. M1-10 extends
+//! this file with retention, theme, blocklist, and the rest. Unknown fields are
+//! preserved so a settings file written by another build is not destroyed.
+//!
+//! Write policy: temp file → fsync → rename, with a `.bak` copy of the previous
+//! version. A parse error never overwrites the broken file; defaults are used
+//! in memory and the user is warned.
+
+use std::fs;
+use std::io::Write;
+use std::path::{Path, PathBuf};
+
+use serde::{Deserialize, Serialize};
+use serde_json::{Map, Value};
+
+pub const DEFAULT_HOTKEY: &str = "CommandOrControl+Shift+Space";
+
+#[derive(Debug, Clone, Serialize, Deserialize)]
+pub struct Settings {
+    #[serde(default = "default_version")]
+    pub version: u32,
+    #[serde(default = "default_hotkey")]
+    pub hotkey: String,
+    /// Fields owned by other/newer builds.
+    #[serde(flatten)]
+    pub extra: Map<String, Value>,
+}
+
+impl Default for Settings {
+    fn default() -> Self {
+        Self {
+            version: 1,
+            hotkey: DEFAULT_HOTKEY.to_string(),
+            extra: Map::new(),
+        }
+    }
+}
+
+fn default_version() -> u32 {
+    1
+}
+
+fn default_hotkey() -> String {
+    DEFAULT_HOTKEY.to_string()
+}
+
+/// Plans do not need a settings directory abstraction: everything lives next to
+/// the database under the app data root.
+pub struct SettingsStore {
+    path: PathBuf,
+}
+
+impl SettingsStore {
+    pub fn new(data_dir: &Path) -> Self {
+        Self {
+            path: data_dir.join("settings.json"),
+        }
+    }
+
+    pub fn load(&self) -> Settings {
+        match fs::read_to_string(&self.path) {
+            Ok(text) => match serde_json::from_str::<Settings>(&text) {
+                Ok(settings) => settings,
+                Err(error) => {
+                    log::warn!(
+                        target: "copyfie::settings",
+                        "settings.json is invalid; using defaults without overwriting it: {error}"
+                    );
+                    Settings::default()
+                }
+            },
+            Err(error) if error.kind() == std::io::ErrorKind::NotFound => Settings::default(),
+            Err(error) => {
+                log::warn!(
+                    target: "copyfie::settings",
+                    "could not read settings.json; using defaults: {error}"
+                );
+                Settings::default()
+            }
+        }
+    }
+
+    pub fn save(&self, settings: &Settings) -> Result<(), String> {
+        let json = serde_json::to_string_pretty(settings)
+            .map_err(|error| format!("could not serialize settings: {error}"))?;
+
+        if let Some(parent) = self.path.parent() {
+            fs::create_dir_all(parent)
+                .map_err(|error| format!("could not create the settings directory: {error}"))?;
+        }
+
+        let temp = self.path.with_extension("json.tmp");
+        {
+            let mut file = fs::File::create(&temp)
+                .map_err(|error| format!("could not create settings.json.tmp: {error}"))?;
+            file.write_all(json.as_bytes())
+                .map_err(|error| format!("could not write settings.json.tmp: {error}"))?;
+            file.sync_all()
+                .map_err(|error| format!("could not flush settings.json.tmp: {error}"))?;
+        }
+
+        if self.path.exists() {
+            let backup = self.path.with_extension("json.bak");
+            if let Err(error) = fs::copy(&self.path, &backup) {
+                log::warn!(target: "copyfie::settings", "could not keep settings.json.bak: {error}");
+            }
+        }
+
+        fs::rename(&temp, &self.path)
+            .map_err(|error| format!("could not replace settings.json: {error}"))?;
+        Ok(())
+    }
+
+    pub fn save_hotkey(&self, hotkey: &str) -> Result<(), String> {
+        let mut settings = self.load();
+        settings.hotkey = hotkey.to_string();
+        self.save(&settings)
+    }
+}
+
+#[cfg(test)]
+mod tests {
+    use super::*;
+    use serde_json::json;
+
+    fn store() -> (tempfile::TempDir, SettingsStore) {
+        let dir = tempfile::tempdir().expect("tempdir");
+        let store = SettingsStore::new(dir.path());
+        (dir, store)
+    }
+
+    #[test]
+    fn defaults_when_missing() {
+        let (_dir, store) = store();
+        let settings = store.load();
+        assert_eq!(settings.version, 1);
+        assert_eq!(settings.hotkey, DEFAULT_HOTKEY);
+    }
+
+    #[test]
+    fn round_trips_and_preserves_unknown_fields() {
+        let (_dir, store) = store();
+        let mut settings = Settings {
+            hotkey: "CommandOrControl+Shift+F9".to_string(),
+            ..Settings::default()
+        };
+        settings
+            .extra
+            .insert("retention_days".to_string(), json!(90));
+
+        store.save(&settings).expect("save");
+        let loaded = store.load();
+        assert_eq!(loaded.hotkey, "CommandOrControl+Shift+F9");
+        assert_eq!(loaded.extra.get("retention_days"), Some(&json!(90)));
+    }
+
+    #[test]
+    fn broken_file_uses_defaults_and_is_not_overwritten() {
+        let (dir, store) = store();
+        let path = dir.path().join("settings.json");
+        fs::write(&path, "{ not json").expect("write");
+
+        let settings = store.load();
+        assert_eq!(settings.hotkey, DEFAULT_HOTKEY);
+        assert_eq!(fs::read_to_string(&path).expect("read"), "{ not json");
+    }
+
+    #[test]
+    fn save_keeps_a_backup_of_the_previous_file() {
+        let (dir, store) = store();
+        store
+            .save_hotkey("CommandOrControl+Shift+F9")
+            .expect("first");
+        store
+            .save_hotkey("CommandOrControl+Shift+F10")
+            .expect("second");
+
+        let backup = dir.path().join("settings.json.bak");
+        let text = fs::read_to_string(backup).expect("backup");
+        assert!(text.contains("F9"));
+        assert!(fs::read_to_string(dir.path().join("settings.json"))
+            .expect("main")
+            .contains("F10"));
+    }
+
+    #[test]
+    fn save_hotkey_keeps_other_values() {
+        let (_dir, store) = store();
+        let mut settings = Settings::default();
+        settings.extra.insert("theme".to_string(), json!("dark"));
+        store.save(&settings).expect("save");
+
+        store
+            .save_hotkey("CommandOrControl+Alt+Space")
+            .expect("save hotkey");
+        let loaded = store.load();
+        assert_eq!(loaded.extra.get("theme"), Some(&json!("dark")));
+    }
+}

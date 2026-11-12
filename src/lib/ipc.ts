@@ -53,6 +53,20 @@ export function pasteItem(id: number): Promise<PasteReport> {
   return invoke<PasteReport>("paste_item", { id });
 }
 
+export interface HotkeyStatus {
+  configured: string;
+  registered: boolean;
+  initialized: boolean;
+}
+
+export function hotkeyStatus(): Promise<HotkeyStatus> {
+  return invoke<HotkeyStatus>("hotkey_status");
+}
+
+export function setHotkey(accelerator: string): Promise<HotkeyStatus> {
+  return invoke<HotkeyStatus>("set_hotkey", { accelerator });
+}
+
 export function hidePalette(): Promise<void> {
   return invoke<void>("hide_palette");
 }

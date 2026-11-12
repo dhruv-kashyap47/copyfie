@@ -5,6 +5,7 @@
 
 pub mod history;
 pub mod paste;
+pub mod settings;
 pub mod window;
 
 use serde::Serialize;
