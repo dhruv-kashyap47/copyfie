@@ -181,4 +181,53 @@
 
 ### Next up
 
-- **M1-04** — capture pipeline: privacy gate, text capture, source app, suppression, coalesced `history:changed`.
+- **M1-04** - capture pipeline: privacy gate, text capture, source app, suppression, coalesced `history:changed`.
+
+---
+
+## 2026-11-12 — Session 5 (Milestone 1, M1-04)
+
+**Scope:** M1-04 — capture pipeline: privacy gate, text capture, source app, suppression, coalesced `history:changed`.
+
+### Done
+
+- **`platform/common` (`copyfie-platform`):** new workspace crate with no OS APIs. Traits `ClipboardWatcher`, `ClipboardReader` (two-phase `probe(sequence)` then `read_text(sequence)`), `ForegroundApp`, a `ClipboardProbe` (text/image/files/concealed), `PlatformError`, and blanket `Arc`/`Box` impls so tests can share fake backends.
+- **Capture pipeline (`src-tauri/src/capture/pipeline.rs`):** probe → snapshot config + foreground app → privacy gate → read payload → canonicalize → empty check → echo check → store upsert → emit. Platform and clock are injectable. Outcomes distinguish `Stored { id, is_new }` from `Skipped(reason)`; platform/store failures return typed `CaptureError`.
+- **Privacy gate (`capture/privacy.rs`):** `CaptureConfig` (paused, skip_concealed, retention, blocklist), `PrivacyGate::evaluate` with order paused → concealed → blocked app → has-text, and per-OS blocklist matching: Windows case-insensitive full path/basename (slash-normalized), macOS exact bundle id, Linux `WM_CLASS` or executable basename. Rules are platform-scoped.
+- **Echo suppression (`capture/suppress.rs`):** one-shot, content-addressed token with a 2 s TTL; consuming clears it; re-arming replaces; expired tokens never match; `arm_text` canonicalizes so CRLF copies match.
+- **Coalesced events (`capture/events.rs`):** `EventCoalescer` emits at most once per 80 ms window with a monotonic revision; `tauri_history_events(app)` bridges to the `history:changed` Tauri event; `HistoryEvents` trait keeps the pipeline testable.
+- **Source-app helpers (`capture/source_app.rs`):** two-separator basename and display-name fallback (`name` → executable basename → "Unknown").
+- **`StoreHandle::call_blocking`:** blocking actor call for dedicated threads (capture/cleanup), alongside the async command path.
+- **Dedupe correction (M1-02 follow-up):** `is_new` is now decided by *which statement matched* — `INSERT ... ON CONFLICT DO NOTHING RETURNING id`, else `UPDATE ... RETURNING id` — instead of `first_seen_at = captured_at`. The timestamp trick misreported a same-millisecond recopy as new; a regression test now covers it.
+
+### Decisions
+
+- **Two-phase read is enforced by types**, not convention: the gate only receives a `ClipboardProbe`, and `read_text` is callable only after `Allow`. Pipeline tests assert read count stays 0 for concealed, paused, and blocked-app changes.
+- **Pause is evaluated before concealed/blocklist** to avoid needless foreground queries; all three paths are skip-only and never read the payload.
+- **Whitespace-only text is skipped** (`EmptyText`) in addition to truly empty text — stray whitespace copies are noise, and this avoids near-duplicate rows in the palette.
+- **Suppression TTL is monotonic (`Instant`)**, not wall-clock, so a clock change cannot extend an echo window.
+- **Events fire only after a successful write.** A failed `upsert` leaves no event and no armed suppression, so the next OS notification retries the same content.
+- **`history:changed` carries only `{ revision }`.** Coalescing discards per-row detail by design; the palette refetches and can ignore stale revisions.
+- **`capture` is a public module** in the app lib until the platform runner (M1-05) consumes it; this keeps the library API honest and `-D warnings` clean without allows.
+
+### Verification
+
+- `cargo test --workspace` → **83 passed** (44 app + 21 core unit + 18 core integration).
+- Pipeline coverage: allowed text stored, concealed/paused/blocked never read, empty/whitespace skipped, armed echo skipped once and then captured, same-millisecond recopy not `is_new`, retention applied, source app persisted, live config updates, probe failure surfaced.
+- Coalescer coverage: 25-event burst → one emit; separate bursts advance revision; 10 000 `notify()` calls stay under 500 ms.
+- `cargo fmt --all`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo deny --config scripts/license/cargo-deny.toml check` → clean.
+
+### Measurements
+
+- Test suite (all crates): **83 tests in ~0.55 s**.
+- Coalescer cost: 10 000 notifications < 500 ms (channel send only, no lock, no webview call).
+
+### Notes / follow-ups
+
+- The pipeline is not started in the app yet: platform watch loops arrive in **M1-05**, which also wires `tauri_history_events` and `AppState`'s config/suppressor handles.
+- Paste orchestration (M1-08) must call `Suppressor::arm_text` **before** writing to the clipboard.
+- Image/file probes exist in the type but the gate skips them (`NoText`) until M2-04/M2-05.
+
+### Next up
+
+- **M1-05** — platform text capture: Windows `WM_CLIPBOARDUPDATE`, macOS `changeCount` polling, Linux X11 XFixes; foreground app identity; concealed markers; runner wiring.

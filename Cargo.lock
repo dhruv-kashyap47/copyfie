@@ -387,6 +387,7 @@ name = "copyfie"
 version = "0.1.0"
 dependencies = [
  "copyfie-core",
+ "copyfie-platform",
  "serde",
  "serde_json",
  "tauri",
@@ -405,6 +406,14 @@ dependencies = [
  "serde",
  "serde_json",
  "tempfile",
+ "thiserror 2.0.21",
+]
+
+[[package]]
+name = "copyfie-platform"
+version = "0.1.0"
+dependencies = [
+ "copyfie-core",
  "thiserror 2.0.21",
 ]
 

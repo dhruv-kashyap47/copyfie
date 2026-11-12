@@ -72,6 +72,29 @@ impl StoreHandle {
             Err(_) => Err(ActorError::Stopped),
         }
     }
+
+    /// Blocking variant for dedicated threads (capture, cleanup, blob GC).
+    ///
+    /// Never call this from the async runtime or the UI thread: it waits on
+    /// the actor thread to finish the operation.
+    pub fn call_blocking<T, F>(&self, op: F) -> Result<T>
+    where
+        T: Send + 'static,
+        F: FnOnce(&Database) -> std::result::Result<T, StoreError> + Send + 'static,
+    {
+        let (reply_tx, reply_rx) = mpsc::sync_channel(1);
+
+        self.tx
+            .send(Box::new(move |db| {
+                let _ = reply_tx.send(op(db));
+            }))
+            .map_err(|_| ActorError::Stopped)?;
+
+        match reply_rx.recv() {
+            Ok(result) => result.map_err(ActorError::from),
+            Err(_) => Err(ActorError::Stopped),
+        }
+    }
 }
 
 #[cfg(test)]

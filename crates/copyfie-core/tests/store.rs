@@ -42,6 +42,22 @@ fn new_content_inserts_one_row() {
 }
 
 #[test]
+fn recopy_in_the_same_millisecond_is_not_new() {
+    let db = open();
+
+    let first = db.upsert(&text("identical", T0, 30)).expect("first");
+    let second = db.upsert(&text("identical", T0, 30)).expect("second");
+
+    assert!(first.is_new);
+    assert_eq!(first.id, second.id);
+    assert!(
+        !second.is_new,
+        "identity comes from the index, not from timestamps"
+    );
+    assert_eq!(db.count(None).expect("count"), 1);
+}
+
+#[test]
 fn recopy_dedupes_and_moves_to_top() {
     let db = open();
 

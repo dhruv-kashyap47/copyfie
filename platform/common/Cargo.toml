@@ -1,0 +1,10 @@
+[package]
+name = "copyfie-platform"
+version.workspace = true
+edition.workspace = true
+publish = false
+description = "Platform traits and shared clipboard types for Copyfie"
+
+[dependencies]
+copyfie-core = { path = "../../crates/copyfie-core", version = "0.1.0" }
+thiserror = "2"

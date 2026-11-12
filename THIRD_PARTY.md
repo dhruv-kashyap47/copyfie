@@ -54,6 +54,7 @@ copy of this file.
 | `tokio` | MIT | Async reply channels for the store actor (Tauri provides the runtime) |
 | `tempfile` | MIT OR Apache-2.0 | Atomic staging and tests (dev) |
 | `copyfie-core` | Proprietary (internal) | Models, store, search — not published |
+| `copyfie-platform` | Proprietary (internal) | Platform traits shared by OS backends — not published |
 
 ## 3. Direct JavaScript dependencies
 

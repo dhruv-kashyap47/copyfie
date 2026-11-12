@@ -9,6 +9,8 @@ mod state;
 mod store;
 mod thumbs;
 
+pub mod capture;
+
 use tauri::Manager;
 
 use state::AppState;

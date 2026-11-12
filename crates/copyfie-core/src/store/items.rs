@@ -1,12 +1,14 @@
 //! Item reads and writes.
 //!
-//! Dedupe is one atomic upsert on `(kind, content_hash)`:
+//! Dedupe is an atomic insert-or-update on `(kind, content_hash)`:
 //! - new content inserts a row;
 //! - a recopy bumps `captured_at`, refreshes the source app, resets
 //!   `use_count`, preserves the payload, and keeps pins pinned.
 //!
-//! `is_new` acknowledges persistence, which is what lets the capture pipeline
-//! treat a failed write as retryable instead of poisoning dedupe.
+//! `is_new` is determined by which statement matched, not by comparing
+//! timestamps, so a recopy in the same millisecond is still reported as an
+//! existing row. `is_new` is the persistence acknowledgement that lets the
+//! capture pipeline treat a failed write as retryable.
 
 use rusqlite::types::{FromSql, FromSqlError, FromSqlResult, ToSql, ToSqlOutput, Type, ValueRef};
 use rusqlite::{params, OptionalExtension, Row};
@@ -20,44 +22,70 @@ const ITEM_COLUMNS: &str = "id, kind, content_hash, text, preview, blob_name, th
      byte_size, width, height, source_app_id, source_app_name, source_window_title, \
      is_pinned, captured_at, first_seen_at, last_used_at, use_count, expires_at, ocr_text";
 
-const UPSERT_SQL: &str = "INSERT INTO items ( \
+const INSERT_SQL: &str = "INSERT INTO items ( \
      kind, content_hash, text, preview, blob_name, thumb_name, byte_size, width, height, \
      source_app_id, source_app_name, source_window_title, captured_at, first_seen_at, expires_at \
      ) VALUES (?1, ?2, ?3, ?4, ?5, ?6, ?7, ?8, ?9, ?10, ?11, ?12, ?13, ?13, ?14) \
-     ON CONFLICT(kind, content_hash) DO UPDATE SET \
-       captured_at = excluded.captured_at, \
-       source_app_id = excluded.source_app_id, \
-       source_app_name = excluded.source_app_name, \
-       source_window_title = excluded.source_window_title, \
+     ON CONFLICT(kind, content_hash) DO NOTHING \
+     RETURNING id";
+
+const UPDATE_SQL: &str = "UPDATE items SET \
+       captured_at = ?3, \
+       source_app_id = ?4, \
+       source_app_name = ?5, \
+       source_window_title = ?6, \
        use_count = 0, \
-       expires_at = CASE WHEN items.is_pinned = 1 THEN NULL ELSE excluded.expires_at END \
-     RETURNING id, (first_seen_at = captured_at) AS is_new";
+       expires_at = CASE WHEN is_pinned = 1 THEN NULL ELSE ?7 END \
+     WHERE kind = ?1 AND content_hash = ?2 \
+     RETURNING id";
 
 impl Database {
     /// Insert new content, or bump an existing row with the same identity.
     pub fn upsert(&self, item: &NewItem) -> Result<InsertOutcome> {
-        let (id, is_new): (i64, bool) = self.conn().query_row(
-            UPSERT_SQL,
+        let inserted: Option<i64> = self
+            .conn()
+            .query_row(
+                INSERT_SQL,
+                params![
+                    item.kind,
+                    item.content_hash.as_slice(),
+                    item.text,
+                    item.preview,
+                    item.blob_name,
+                    item.thumb_name,
+                    item.byte_size,
+                    item.width,
+                    item.height,
+                    item.source_app_id,
+                    item.source_app_name,
+                    item.source_window_title,
+                    item.captured_at,
+                    item.expires_at,
+                ],
+                |row| row.get(0),
+            )
+            .optional()?;
+
+        if let Some(id) = inserted {
+            return Ok(InsertOutcome { id, is_new: true });
+        }
+
+        // The unique index matched: refresh recency/source and keep the payload.
+        let id = self.conn().query_row(
+            UPDATE_SQL,
             params![
                 item.kind,
                 item.content_hash.as_slice(),
-                item.text,
-                item.preview,
-                item.blob_name,
-                item.thumb_name,
-                item.byte_size,
-                item.width,
-                item.height,
+                item.captured_at,
                 item.source_app_id,
                 item.source_app_name,
                 item.source_window_title,
-                item.captured_at,
                 item.expires_at,
             ],
-            |row| Ok((row.get(0)?, row.get(1)?)),
+            |row| row.get(0),
         )?;
 
-        Ok(InsertOutcome { id, is_new })
+        Ok(InsertOutcome { id, is_new: false })
     }
 
     /// Full row by id.
