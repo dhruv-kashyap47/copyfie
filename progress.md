@@ -587,3 +587,56 @@ DB: 8.45 MB for 10,004 items (~840 B/item). Retention cleanup: 4.8 ms.
 ### Next up
 
 - **M1-12** — measure real RSS per OS (core + process tree, 10k items, 10 min idle) and record in `docs/perf/`.
+
+---
+
+## 2026-11-12 — Session 13 (Milestone 1, M1-12 — RAM gate blocked)
+
+**Scope:** M1-12 RSS measurement, captured on the Windows release build. **Stopped at the RAM gate per the milestone rules.**
+
+### Done
+
+- **Capture latency:** added `scripts/perf/capture_latency.py` (Win32 `CF_UNICODETEXT`, 5 ms SQLite polling). Release build, 10,024 items, 20 iterations: **20.1 ms p50 / 28.0 ms p95 / 28.0 ms max** — well inside the 500 ms budget.
+- **RSS harness:** `scripts/perf/rss.ps1` samples the Copyfie process tree (core + WebView2 children) every 5 s. Release build, 10,004 items, palette hidden/pre-warmed, **10 minutes idle, 116 samples**.
+- **Release build:** `target/release/copyfie.exe` 4,865,536 bytes, `tauri build --no-bundle` succeeded.
+- **Recorded:** `docs/perf/rss-0.1.0-windows-x86_64.json`, `docs/perf/capture-latency-0.1.0-windows-x86_64.json`, `docs/PERF.md`, `docs/ACCEPTANCE.md`.
+- **M1-10 follow-up:** Clear history in Settings (unpinned by default, optional pinned) and a `hotkey_to_show_us` log line.
+
+### RSS result (gate)
+
+| Component | Working set |
+|---|---:|
+| `copyfie.exe` core | **27.3 MB** (24.3 in the control run) |
+| WebView2 browser | 116-121 MB |
+| GPU process | 70-79 MB |
+| Renderer | 71-77 MB |
+| Network service | 37-40 MB |
+| Storage service | 19-21 MB |
+| Crashpad | 12.7 MB |
+| **Total** | **360-370 MB** (min 360.0, avg 362.1, max 370.1) |
+| Total private | ~168-180 MB |
+
+- **Core passes** the <40 MB target.
+- **Total fails** the 60-100 MB expectation and the hard 120 MB gate.
+- **Fresh-profile control:** renamed the WebView2 user-data folder and re-ran 60 s → 354-363 MB. Not profile bloat.
+- Working-set sums double-count shared WebView2 DLL pages, so the private total (~170 MB) is the fairer number - still above 120 MB.
+
+### Decision required (per PLAN rules, not silently changed)
+
+1. **Raise the total budget** (e.g., core <40 MB, total <400 MB) and keep pre-warm. Preserves the <100 ms open path; accepts a heavy idle footprint.
+2. **Drop pre-warm** (create on hotkey, destroy on close): idle ≈ core (~30 MB), but cold open 250-700 ms.
+3. **Hybrid:** pre-warm while active, destroy after N idle minutes. Idle meets the gate; first open after idle is cold.
+4. **Native palette UI** (GPUI/egui) with Tauri only for settings: best memory, large rewrite.
+5. **WebView2 tuning** (`--disable-gpu`, renderer limits): test before deciding; unlikely alone to reach 120 MB.
+
+The 60-100 MB plan estimate was informed by native/GPUI apps (Ropy ~57 MB); a single hidden WebView2 window on this machine (Edge WebView2 v157) baselines near 330 MB working set regardless of our app's cache or profile.
+
+### Notes
+
+- The release binary predates the Clear history UI and `hotkey_to_show_us` line (both were added after the build started); rebuild after the gate decision.
+- `docs/ACCEPTANCE.md` records every other M1 criterion with evidence and the remaining cross-platform gaps.
+- M1-13 (acceptance pass) is **blocked** until the RAM decision is recorded.
+
+### Next up
+
+- **Await the RAM gate decision.** Then either implement the chosen option and re-measure, or record the raised budget and finish M1-13.

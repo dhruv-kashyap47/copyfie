@@ -62,6 +62,20 @@ index. That is ~840 bytes per text item.
   nothing to remove. It runs at startup and every five minutes, not per write.
 - The FTS limit is 100 rows; the palette renders 50.
 
+## End-to-end capture latency (Windows, release)
+
+`scripts/perf/capture_latency.py` sets `CF_UNICODETEXT` through Win32 and polls
+the SQLite database every 5 ms until the row is visible. Over 20 iterations on
+the release build with 10,024 items:
+
+| p50 | p95 | Max |
+|---:|---:|---:|
+| **20.1 ms** | **28.0 ms** | 28.0 ms |
+
+This covers OS notification, the privacy probe, the payload read, canonicalize +
+BLAKE3, the store write, and the SQLite commit visibility. The acceptance budget
+is 500 ms p95.
+
 ## How to run
 
 Seed a disposable database and print the report:
@@ -83,12 +97,29 @@ Local filter benchmark:
 npx vitest run src/lib/localSearch.test.ts --reporter verbose
 ```
 
-## RSS and idle CPU
+## RSS and idle CPU (M1-12)
 
-Milestone 1 measures the real process tree (Copyfie + WebView2 children) with
-10k items, the palette pre-warmed, and 10 minutes idle. Results are recorded in
-`docs/perf/` and summarized in the M1 progress entry. The gate is:
+Release build, 10,004 items, palette created hidden (pre-warmed), 10 minutes
+idle, 116 samples at 5 s. A second 60-second run with a **fresh WebView2
+profile** served as a control.
 
-- core process < 40 MB,
-- total process tree 60–100 MB expected,
-- **stop and resolve if total > 120 MB**.
+| Component | Working set |
+|---|---:|
+| `copyfie.exe` (core) | **24-27 MB** |
+| WebView2 browser process | 116-121 MB |
+| GPU process | 70-79 MB |
+| Renderer | 71-77 MB |
+| Network service | 37-40 MB |
+| Storage service | 19-21 MB |
+| Crashpad handler | 12.7 MB |
+| **Total process tree** | **360-370 MB** |
+| Total private committed | ~168-180 MB |
+
+The fresh-profile control measured 354-363 MB, so this is the WebView2 baseline
+on this machine, not profile bloat. The core process is comfortably inside the
+<40 MB target.
+
+**Gate: FAILED.** The plan expects 60-100 MB total and blocks Milestone 1 exit
+above 120 MB. Working-set sums double-count shared WebView2 DLL pages, but even
+the private total (~170 MB) is above the gate. See the decision options in
+`docs/ACCEPTANCE.md`.

@@ -30,8 +30,16 @@ Effort: **S** ≈ 1–3 days · **M** ≈ 1–1.5 weeks · **L** ≈ 2–3 weeks
 - [x] M1-09 Hotkey + first-run conflict detection + rebind + tray + single instance + autostart (M) — deps: M1-07 — status: done
 - [x] M1-10 Minimal settings + theme (M) — deps: M1-06 — status: done
 - [x] M1-11 Perf harness, 10k fixture, baseline report (M) — deps: M1-02 — status: done
-- [ ] M1-12 Measure real RSS per OS (core + total process tree, 10k items, 10 min idle), record in `docs/perf/` (M) — deps: M1-11 — status: todo
-- [ ] M1-13 MVP acceptance pass + docs (M) — deps: M1-01..M1-12 — status: todo
+- [x] M1-12 Measure real RSS per OS (core + total process tree, 10k items, 10 min idle), record in `docs/perf/` (M) — deps: M1-11 — status: done
+- [ ] M1-13 MVP acceptance pass + docs (M) — deps: M1-01..M1-12 — status: blocked
+
+> **BLOCKER (M1 exit): RAM gate.** Windows release build with 10,004 items,
+> pre-warmed hidden palette, 10 minutes idle: core **24–27 MB** (pass), total
+> process tree **360–370 MB** (working set; ~168–180 MB private) across six
+> WebView2 processes. A fresh WebView2 profile gave the same result. The plan's
+> 120 MB gate is exceeded; M1 cannot exit until a decision is recorded (raise
+> the budget, drop/hybridize pre-warm, or change the UI stack). See
+> `docs/ACCEPTANCE.md` and `docs/perf/rss-0.1.0-windows-x86_64.json`.
 
 ## M2 — v1.0
 
