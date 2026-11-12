@@ -94,10 +94,11 @@ with the notice in `third_party/licenses/lucide-ISC.txt`.
 
 | Font | Version | License | Purpose | Text |
 |---|---|---|---|---|
-| Geist Sans | 1.5.1 | SIL OFL 1.1 | Palette and settings UI typeface | `third_party/licenses/geist-OFL.txt` |
+| Inter | 5.2.8 (Latin subset) | SIL OFL 1.1 | Palette and settings UI typeface | `third_party/licenses/inter-OFL.txt` |
 
-The font is a self-hosted variable WOFF2 file in `src/assets/fonts/`; no network request is
-made at runtime. Keyboard hints use the platform's monospace stack.
+The font is a self-hosted Latin-subset variable WOFF2 in `src/assets/fonts/` (33 KB); no
+network request is made at runtime. macOS uses the system SF stack first; Windows/Linux use
+Inter.
 
 ## 4. License policy
 

@@ -76,6 +76,25 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
             }
         });
 
+    #[cfg(target_os = "macos")]
+    {
+        // Derived monochrome silhouette of the supplied app icon; see
+        // assets/logo/README.md. Kept as a template so macOS can tint it for
+        // light and dark menu bars.
+        match tauri::image::Image::from_bytes(include_bytes!("../icons/tray-template.png")) {
+            Ok(icon) => {
+                builder = builder.icon(icon).icon_as_template(true);
+            }
+            Err(error) => {
+                log::warn!(target: "copyfie::tray", "could not load the template tray icon: {error}");
+                if let Some(icon) = app.default_window_icon() {
+                    builder = builder.icon(icon.clone());
+                }
+            }
+        }
+    }
+
+    #[cfg(not(target_os = "macos"))]
     if let Some(icon) = app.default_window_icon() {
         builder = builder.icon(icon.clone());
     }

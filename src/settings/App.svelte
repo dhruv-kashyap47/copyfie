@@ -12,12 +12,14 @@
     type SettingsView,
   } from "../lib/ipc";
   import { applyTheme, cacheTheme, normalizeTheme, type Theme } from "../lib/theme";
+  import wordmarkLight from "../../assets/logo/copyfie-wordmark-light.png";
+  import wordmarkDark from "../../assets/logo/copyfie-wordmark-dark.png";
 
   const mac = isMacPlatform(typeof navigator !== "undefined" ? (navigator.platform ?? "") : "");
 
   let view = $state<SettingsView | null>(null);
   let theme = $state<Theme>("system");
-  let accent = $state("#5B9DFF");
+  let accent = $state("#007AFF");
   let retention = $state<number>(30);
   let paused = $state(false);
   let launchAtLogin = $state(false);
@@ -202,11 +204,12 @@
     };
   });
 </script>
-
 <header>
-  <div class="header-copy">
-    <h1>Copyfie Settings</h1>
-    <p>Local history, appearance and startup.</p>
+  <div class="brand">
+    <img class="brand-light" src={wordmarkLight} alt="Copyfie" />
+    <img class="brand-dark" src={wordmarkDark} alt="Copyfie" />
+    <span class="brand-text">Copyfie</span>
+    <span class="version">{view ? `v${view.appVersion}` : ""}</span>
   </div>
   <span class="state">{saving ? "Saving…" : (status ?? "")}</span>
 </header>
@@ -223,128 +226,159 @@
   {:else}
     <section>
       <h2>Appearance</h2>
-      <div class="row">
-        <span class="label">Theme</span>
-        <div class="segmented" role="group" aria-label="Theme">
-          {#each ["system", "light", "dark"] as option (option)}
-            <button
-              type="button"
-              class:active={theme === option}
-              aria-pressed={theme === option}
-              onclick={() => setTheme(option as Theme)}
-            >
-              {option === "system" ? "System" : option === "light" ? "Light" : "Dark"}
-            </button>
-          {/each}
+      <div class="group">
+        <div class="row">
+          <span>Theme</span>
+          <div class="segmented" role="group" aria-label="Theme">
+            {#each ["system", "light", "dark"] as option (option)}
+              <button
+                type="button"
+                class:active={theme === option}
+                aria-pressed={theme === option}
+                onclick={() => setTheme(option as Theme)}
+              >
+                {option === "system" ? "System" : option === "light" ? "Light" : "Dark"}
+              </button>
+            {/each}
+          </div>
         </div>
       </div>
     </section>
 
     <section>
       <h2>Palette</h2>
-      <div class="row">
-        <label for="palette-ready">Keep palette ready</label>
-        <select id="palette-ready" bind:value={paletteReady} onchange={persist}>
-          <option value="auto">Auto (recommended)</option>
-          <option value="always">Always</option>
-          <option value="never">Never</option>
-        </select>
-      </div>
-      {#if paletteReady === "auto"}
+      <div class="group">
         <div class="row">
-          <label for="palette-idle">Forget after</label>
-          <select id="palette-idle" bind:value={paletteIdleMinutes} onchange={persist}>
-            <option value={5}>5 minutes</option>
-            <option value={10}>10 minutes</option>
-            <option value={30}>30 minutes</option>
-          </select>
+          <span>Keep palette ready</span>
+          <div class="segmented" role="group" aria-label="Keep palette ready">
+            {#each [["auto", "Auto"], ["always", "Always"], ["never", "Never"]] as [value, label] (value)}
+              <button
+                type="button"
+                class:active={paletteReady === value}
+                aria-pressed={paletteReady === value}
+                onclick={() => {
+                  paletteReady = value;
+                  persist();
+                }}
+              >
+                {label}
+              </button>
+            {/each}
+          </div>
         </div>
-      {/if}
+        {#if paletteReady === "auto"}
+          <div class="row">
+            <label for="palette-idle">Forget after</label>
+            <select id="palette-idle" class="select" bind:value={paletteIdleMinutes} onchange={persist}>
+              <option value={5}>5 minutes</option>
+              <option value={10}>10 minutes</option>
+              <option value={30}>30 minutes</option>
+            </select>
+          </div>
+        {/if}
+      </div>
       <p class="hint">
         Auto keeps the palette warm while you work and releases its memory after
         the idle period. Always keeps it pre-warmed; Never creates it on every
-        hotkey (lowest idle memory, slower open).
+        hotkey.
       </p>
     </section>
 
     <section>
       <h2>History</h2>
-      <div class="row">
-        <label for="retention">Keep history</label>
-        <select id="retention" bind:value={retention} onchange={persist}>
-          <option value={7}>7 days</option>
-          <option value={30}>30 days</option>
-          <option value={90}>90 days</option>
-          <option value={365}>365 days</option>
-          <option value={0}>Forever</option>
-        </select>
-      </div>
-      <div class="row">
-        <label for="paused">Pause capture</label>
-        <input id="paused" type="checkbox" bind:checked={paused} onchange={persist} />
-      </div>
-      <div class="row">
-        <span class="label">Clear history</span>
-        <div class="clear-actions">
-          <label class="inline">
-            <input type="checkbox" bind:checked={clearPinned} /> include pinned
-          </label>
+      <div class="group">
+        <div class="row">
+          <label for="retention">Keep history</label>
+          <select id="retention" class="select" bind:value={retention} onchange={persist}>
+            <option value={7}>7 days</option>
+            <option value={30}>30 days</option>
+            <option value={90}>90 days</option>
+            <option value={365}>365 days</option>
+            <option value={0}>Forever</option>
+          </select>
+        </div>
+        <label class="row" for="paused">
+          <span>Pause capture</span>
+          <span class="switch">
+            <input id="paused" type="checkbox" bind:checked={paused} onchange={persist} />
+            <span class="knob"></span>
+          </span>
+        </label>
+        <div class="row">
+          <span>Clear history</span>
           <button type="button" class="danger" disabled={clearing} onclick={() => void clearAll()}>
-            Clear…
+            {clearing ? "Clearing…" : "Clear…"}
           </button>
         </div>
+        <label class="row" for="clear-pinned">
+          <span>Include pinned items</span>
+          <span class="switch">
+            <input id="clear-pinned" type="checkbox" bind:checked={clearPinned} />
+            <span class="knob"></span>
+          </span>
+        </label>
       </div>
       <p class="hint">Pinned items are never deleted by retention.</p>
     </section>
 
     <section>
       <h2>Shortcut</h2>
-      <div class="row">
-        <span class="label">Open palette</span>
-        <div class="shortcut">
-          <kbd>{formatAccelerator(hotkey, mac)}</kbd>
-          <button type="button" onclick={startRecording}>Change</button>
+      <div class="group">
+        <div class="row">
+          <span>Open palette</span>
+          <div class="shortcut">
+            <kbd>{formatAccelerator(hotkey, mac)}</kbd>
+            <button type="button" onclick={startRecording}>Change</button>
+          </div>
         </div>
-      </div>
 
-      {#if recording}
-        <div
-          class="recorder"
-          bind:this={recorder}
-          role="textbox"
-          tabindex="0"
-          aria-label="Record a shortcut"
-          onkeydown={onRecorderKeydown}
-        >
-          {#if pendingHotkey}
-            {formatAccelerator(pendingHotkey, mac)}
-          {:else}
-            <span class="placeholder">Press a shortcut…</span>
-          {/if}
-        </div>
-        <div class="recorder-actions">
-          <button type="button" onclick={() => void applyHotkey()} disabled={!pendingHotkey}>
-            Apply shortcut
-          </button>
-          <button type="button" class="ghost" onclick={() => (recording = false)}>Cancel</button>
-        </div>
-        <p class="hint">Include {mac ? "⌘" : "Ctrl"} or {mac ? "⌥" : "Alt"}.</p>
-      {/if}
+        {#if recording}
+          <div class="row recorder-row">
+            <div
+              class="recorder"
+              bind:this={recorder}
+              role="textbox"
+              tabindex="0"
+              aria-label="Record a shortcut"
+              onkeydown={onRecorderKeydown}
+            >
+              {#if pendingHotkey}
+                {formatAccelerator(pendingHotkey, mac)}
+              {:else}
+                <span class="placeholder">Press a shortcut…</span>
+              {/if}
+            </div>
+            <div class="recorder-actions">
+              <button type="button" class="primary" onclick={() => void applyHotkey()} disabled={!pendingHotkey}>
+                Apply shortcut
+              </button>
+              <button type="button" onclick={() => (recording = false)}>Cancel</button>
+            </div>
+            <p class="inline-hint">Include {mac ? "⌘" : "Ctrl"} or {mac ? "⌥" : "Alt"}.</p>
+          </div>
+        {/if}
+      </div>
     </section>
 
     <section>
       <h2>Startup</h2>
-      <div class="row">
-        <label for="login">Launch at login</label>
-        <input id="login" type="checkbox" bind:checked={launchAtLogin} onchange={persist} />
+      <div class="group">
+        <label class="row" for="login">
+          <span>Launch at login</span>
+          <span class="switch">
+            <input id="login" type="checkbox" bind:checked={launchAtLogin} onchange={persist} />
+            <span class="knob"></span>
+          </span>
+        </label>
       </div>
     </section>
 
-    <section class="about">
+    <section>
       <h2>About</h2>
-      <p>Copyfie {view.appVersion}</p>
-      <p>Clipboard history stays on this device. No account, no telemetry.</p>
-      <p>Portions adapted from Ortu and Ropy (MIT). See THIRD_PARTY.md.</p>
+      <div class="group about">
+        <p>Clipboard history stays on this device. No account, no telemetry.</p>
+        <p>Portions adapted from Ortu and Ropy (MIT). See THIRD_PARTY.md.</p>
+      </div>
     </section>
   {/if}
 </main>
@@ -356,45 +390,87 @@
 <style>
   header {
     display: flex;
-    align-items: flex-start;
+    align-items: center;
     justify-content: space-between;
     gap: 16px;
-    padding: 20px 20px 14px;
+    max-width: 480px;
+    margin: 0 auto;
+    padding: 24px 20px 16px;
   }
 
-  .header-copy {
+  .brand {
+    display: flex;
+    align-items: center;
+    gap: 8px;
     min-width: 0;
   }
 
-  h1 {
-    margin: 0;
-    font-size: var(--font-size-xl);
+  .brand img {
+    display: block;
+    height: 28px;
+    width: auto;
+  }
+
+  .brand img.brand-light {
+    display: none;
+  }
+
+  :root[data-theme="light"] .brand img.brand-light {
+    display: block;
+  }
+
+  :root[data-theme="light"] .brand img.brand-dark {
+    display: none;
+  }
+
+  @media (prefers-color-scheme: light) {
+    :root:not([data-theme]) .brand img.brand-light {
+      display: block;
+    }
+
+    :root:not([data-theme]) .brand img.brand-dark {
+      display: none;
+    }
+  }
+
+  .brand-text {
+    display: none;
+    color: var(--text);
+    font-size: 18px;
+    font-weight: 600;
     letter-spacing: -0.01em;
   }
 
-  .header-copy p {
-    margin: 4px 0 0;
-    font-size: var(--font-size-xs);
-    color: var(--fg-muted);
+  @media (prefers-contrast: more) {
+    .brand img {
+      display: none !important;
+    }
+
+    .brand-text {
+      display: inline;
+    }
+  }
+
+  .version {
+    color: var(--text-2);
+    font-size: 11px;
+    font-variant-numeric: tabular-nums;
   }
 
   .state {
     flex: none;
-    padding-top: 2px;
-    font-size: var(--font-size-xs);
-    color: var(--fg-muted);
+    color: var(--text-2);
+    font-size: 11px;
   }
 
   main {
+    max-width: 480px;
+    margin: 0 auto;
     padding: 0 20px 24px;
   }
 
   section {
-    margin-bottom: 10px;
-    padding: 14px 16px;
-    border: 1px solid var(--border);
-    border-radius: var(--radius-well);
-    background: var(--bg-elevated);
+    margin-bottom: 18px;
   }
 
   section:last-child {
@@ -402,11 +478,18 @@
   }
 
   h2 {
-    margin: 0 0 10px;
-    font-size: var(--font-size-sm);
-    font-weight: 700;
-    letter-spacing: 0.01em;
-    color: var(--fg);
+    margin: 0 0 6px;
+    padding: 0 4px;
+    color: var(--text-2);
+    font-size: var(--font-size-section);
+    font-weight: 500;
+    letter-spacing: 0;
+  }
+
+  .group {
+    overflow: hidden;
+    border-radius: var(--radius-group);
+    background: var(--surface-2);
   }
 
   .row {
@@ -414,99 +497,146 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    min-height: 34px;
+    min-height: 44px;
+    padding: 0 14px;
+    border-top: 1px solid var(--separator);
+    color: var(--text);
+    font-size: var(--font-size-body);
+    font-weight: 400;
+    text-decoration: none;
   }
 
-  label,
-  .label {
-    color: var(--fg);
-    font-size: var(--font-size-sm);
+  .row:first-child {
+    border-top: none;
   }
 
-  select {
-    min-width: 130px;
-    padding: 5px 8px;
-    border: var(--control-border-width) solid var(--control-border);
-    border-radius: var(--radius-sm);
-    background: var(--control-bg);
-    color: var(--fg);
-  }
-
-  select:focus-visible {
-    border-color: var(--focus);
-    outline: none;
-  }
-
-  input[type="checkbox"] {
-    width: 16px;
-    height: 16px;
-    accent-color: var(--accent);
-    cursor: pointer;
+  .hint,
+  .inline-hint {
+    margin: 6px 4px 0;
+    color: var(--text-2);
+    font-size: 11px;
+    font-weight: 400;
+    line-height: 1.45;
   }
 
   .segmented {
     display: flex;
     gap: 2px;
     padding: 2px;
-    border: var(--control-border-width) solid var(--control-border);
-    border-radius: var(--radius-sm);
-    background: var(--track-bg);
+    border-radius: 7px;
+    background: var(--seg-bg);
   }
 
   .segmented button {
-    padding: 5px 10px;
+    height: 26px;
+    padding: 0 9px;
     border: none;
-    border-radius: 6px;
+    border-radius: 5px;
     background: transparent;
-    color: var(--fg-muted);
-    font-size: var(--font-size-xs);
+    color: var(--text-2);
+    font-size: 11.5px;
+    font-weight: 500;
     cursor: pointer;
   }
 
-  .segmented button:hover {
-    background: var(--control-hover);
-    color: var(--fg);
+  .segmented button.active {
+    background: var(--seg-selected);
+    color: var(--seg-selected-text);
+    box-shadow: var(--shadow-seg);
   }
 
-  .segmented button.active {
-    background: var(--row-selected);
-    color: var(--fg);
-    box-shadow: inset 0 0 0 1px var(--row-selected-border);
+  .select {
+    height: 28px;
+    max-width: 180px;
+    padding: 0 8px;
+    border: none;
+    border-radius: 7px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
+    font-weight: 400;
+    cursor: pointer;
+  }
+
+  .switch {
+    position: relative;
+    width: 44px;
+    height: 26px;
+    flex: none;
+  }
+
+  .switch input {
+    position: absolute;
+    inset: 0;
+    width: 100%;
+    height: 100%;
+    margin: 0;
+    opacity: 0;
+    cursor: pointer;
+    z-index: 1;
+  }
+
+  .knob {
+    position: absolute;
+    inset: 0;
+    border-radius: var(--radius-switch);
+    background: var(--switch-off);
+    pointer-events: none;
+  }
+
+  .knob::after {
+    content: "";
+    position: absolute;
+    top: 2px;
+    left: 2px;
+    width: 22px;
+    height: 22px;
+    border-radius: 50%;
+    background: var(--switch-knob);
+    box-shadow: 0 1px 2px rgba(0, 0, 0, 0.22);
+    transition: transform var(--dur-state) var(--ease);
+  }
+
+  .switch input:checked + .knob {
+    background: var(--accent);
+  }
+
+  .switch input:checked + .knob::after {
+    transform: translateX(18px);
+  }
+
+  .switch input:focus-visible + .knob {
+    box-shadow: 0 0 0 2px var(--focus-ring);
   }
 
   .shortcut {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
   }
 
   kbd {
-    padding: 2px 6px;
-    border: 1px solid var(--control-border);
-    border-radius: 5px;
-    background: var(--control-bg);
-    color: var(--fg);
-    font-family: var(--font-mono);
+    padding: 1px 6px;
+    border-radius: var(--radius-key);
+    background: var(--surface);
+    color: var(--text);
+    font-family: var(--font-ui);
     font-size: 11px;
   }
 
   .shortcut button,
   .recorder-actions button,
   .empty button {
-    padding: 5px 10px;
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-sm);
-    background: var(--control-bg);
-    color: var(--fg);
-    font-size: var(--font-size-xs);
+    height: 26px;
+    padding: 0 10px;
+    border: none;
+    border-radius: 6px;
+    background: var(--surface);
+    color: var(--text);
+    font-size: 11.5px;
+    font-weight: 500;
     cursor: pointer;
     transition: transform var(--dur-press) var(--ease);
-  }
-
-  .shortcut button:hover,
-  .recorder-actions button:hover,
-  .empty button:hover {
-    background: var(--control-hover);
   }
 
   .shortcut button:active,
@@ -515,107 +645,107 @@
     transform: scale(0.98);
   }
 
+  .danger {
+    height: 26px;
+    padding: 0;
+    border: none;
+    background: transparent;
+    color: var(--danger);
+    font-size: 12px;
+    font-weight: 500;
+    cursor: pointer;
+  }
+
+  .danger:disabled {
+    opacity: 0.45;
+    cursor: default;
+  }
+
+  .recorder-row {
+    flex-direction: column;
+    align-items: stretch;
+    gap: 8px;
+    padding: 10px 14px;
+  }
+
   .recorder {
     display: grid;
     place-items: center;
-    min-height: 46px;
-    margin-top: 8px;
-    border: 1px dashed var(--control-border);
-    border-radius: var(--radius-control);
-    background: var(--field-bg);
-    font-family: var(--font-mono);
-    font-size: 12.5px;
+    min-height: 38px;
+    border: 1px dashed var(--separator);
+    border-radius: var(--radius-row);
+    background: var(--surface);
+    color: var(--text);
+    font-size: 12px;
     cursor: text;
   }
 
   .recorder:focus-visible {
     border-color: var(--accent);
     outline: none;
+    box-shadow: 0 0 0 2px var(--focus-ring);
   }
 
   .placeholder {
-    color: var(--fg-muted);
-    font-family: var(--font-ui);
+    color: var(--text-2);
   }
 
   .recorder-actions {
     display: flex;
     gap: 8px;
-    margin-top: 8px;
   }
 
-  .recorder-actions .ghost {
-    background: transparent;
+  .recorder-actions .primary {
+    background: var(--selection-bg);
+    color: var(--selection-fg);
   }
 
-  .hint {
-    margin: 8px 0 0;
-    font-size: var(--font-size-xs);
-    line-height: 1.5;
-    color: var(--fg-muted);
-  }
-
-  .clear-actions {
-    display: flex;
-    align-items: center;
-    gap: 10px;
-  }
-
-  .inline {
-    display: flex;
-    align-items: center;
-    gap: 5px;
-    font-size: var(--font-size-xs);
-    color: var(--fg-muted);
-  }
-
-  .clear-actions .danger {
-    padding: 5px 10px;
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-sm);
-    background: transparent;
-    color: var(--danger);
-    font-size: var(--font-size-xs);
-    cursor: pointer;
-  }
-
-  .clear-actions .danger:hover:not(:disabled) {
-    border-color: var(--danger);
-  }
-
-  .clear-actions .danger:disabled {
+  .recorder-actions .primary:disabled {
     opacity: 0.45;
     cursor: default;
   }
 
+  .inline-hint {
+    margin: 0;
+  }
+
+  .about {
+    padding: 14px;
+  }
+
   .about p {
-    margin: 0 0 6px;
-    font-size: var(--font-size-xs);
+    margin: 0 0 8px;
+    color: var(--text-2);
+    font-size: 11.5px;
     line-height: 1.5;
-    color: var(--fg-muted);
+  }
+
+  .about p:last-child {
+    margin-bottom: 0;
   }
 
   .loading,
   .empty {
-    padding: 24px 0;
-    color: var(--fg-muted);
+    padding: 24px 4px;
+    color: var(--text-2);
   }
 
   .empty .title {
-    margin: 0 0 6px;
-    color: var(--fg);
-    font-weight: 600;
+    margin: 0 0 4px;
+    color: var(--text);
+    font-size: var(--font-size-title);
+    font-weight: 500;
   }
 
   .detail {
     margin: 0 0 12px;
-    font-size: var(--font-size-sm);
+    font-size: var(--font-size-meta);
   }
 
   footer.error {
     padding: 8px 20px;
-    border-top: 1px solid var(--border);
+    border-top: 1px solid var(--separator);
     color: var(--danger);
-    font-size: var(--font-size-xs);
+    font-size: 11px;
   }
 </style>
