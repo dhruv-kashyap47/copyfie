@@ -4,6 +4,8 @@
 //! Entitlement checks are added in one place when the licence module lands.
 
 pub mod history;
+pub mod paste;
+pub mod window;
 
 use serde::Serialize;
 

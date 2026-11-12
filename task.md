@@ -24,7 +24,7 @@ Effort: **S** ≈ 1–3 days · **M** ≈ 1–1.5 weeks · **L** ≈ 2–3 weeks
 - [x] M1-03 Store actor + custom URI protocol for thumbnails (stub) (M) — deps: M1-02 — status: done
 - [x] M1-04 Capture pipeline: privacy gate, text capture, source app, suppression, coalesced `history:changed` (L) — deps: M1-02, M1-03 — status: done
 - [x] M1-05 Platform text capture: Windows, macOS, Linux X11 (L) — deps: M1-04 — status: done
-- [ ] M1-06 Palette UI: Svelte shell, list, keyboard, filters, empty/error states (L) — deps: M1-02, M1-03 — status: todo
+- [x] M1-06 Palette UI: Svelte shell, list, keyboard, filters, empty/error states (L) — deps: M1-02, M1-03 — status: done
 - [ ] M1-07 Pre-warm + show/focus + multi-monitor positioning (M) — deps: M1-06 — status: todo
 - [ ] M1-08 Paste orchestrator: hide, restore focus, write, suppress echo, synthesize paste (L) — deps: M1-05, M1-07 — status: todo
 - [ ] M1-09 Hotkey + first-run conflict detection + rebind + tray + single instance + autostart (M) — deps: M1-07 — status: todo

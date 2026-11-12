@@ -32,6 +32,10 @@ pub fn new_foreground() -> X11Foreground {
     X11Foreground
 }
 
+pub fn write_text(text: &str) -> Result<(), PlatformError> {
+    copyfie_platform::system::write_text(text)
+}
+
 /// True when the session is Wayland rather than X11.
 pub fn is_wayland_session() -> bool {
     std::env::var_os("WAYLAND_DISPLAY").is_some()

@@ -29,3 +29,7 @@ pub fn new_watcher() -> Result<Watcher, PlatformError> {
 pub fn new_foreground() -> WindowsForeground {
     WindowsForeground
 }
+
+pub fn write_text(text: &str) -> Result<(), PlatformError> {
+    copyfie_platform::system::write_text(text)
+}

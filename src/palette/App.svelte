@@ -1,51 +1,158 @@
 <script lang="ts">
   import { onMount } from "svelte";
-  import { invoke } from "@tauri-apps/api/core";
   import { listen } from "@tauri-apps/api/event";
 
-  type AppInfo = {
-    name: string;
-    version: string;
-    coreVersion: string;
-    identifier: string;
-  };
+  import {
+    copyItem,
+    deleteItem,
+    hidePalette,
+    listHistory,
+    pinItem,
+    searchHistory,
+  } from "../lib/ipc";
+  import { filterItems } from "../lib/localSearch";
+  import { mapKey, moveSelection } from "../lib/keymap";
+  import { modifierLabel } from "../lib/format";
+  import { FILTERS, kindForFilter, type Filter, type ItemSummary } from "../lib/types";
 
-  type StoreStats = {
-    total: number;
-    text: number;
-    images: number;
-    files: number;
-  };
+  import FilterBar from "./FilterBar.svelte";
+  import Footer from "./Footer.svelte";
+  import ResultList from "./ResultList.svelte";
+  import SearchBar from "./SearchBar.svelte";
 
-  let info = $state<AppInfo | null>(null);
-  let stats = $state<StoreStats | null>(null);
-  let error = $state<string | null>(null);
-  let captureEvents = $state(0);
+  const RECENT_LIMIT = 100;
+  const SEARCH_DEBOUNCE_MS = 50;
+  const TOAST_MS = 1600;
 
-  async function refreshStats() {
+  let query = $state("");
+  let filter = $state<Filter>("all");
+  let recent = $state<ItemSummary[]>([]);
+  let fts = $state<ItemSummary[] | null>(null);
+  let selected = $state(0);
+  let status = $state<"loading" | "idle" | "error">("loading");
+  let errorMessage = $state<string | null>(null);
+  let toast = $state<string | null>(null);
+  let composing = $state(false);
+
+  let toastTimer: ReturnType<typeof setTimeout> | undefined;
+  let searchRequest = 0;
+  let recentRequest = 0;
+
+  const visible = $derived(fts ?? filterItems(recent, query, filter));
+  const showShortcuts = $derived(query.trim().length === 0);
+  const activeDescendant = $derived(
+    visible[selected] ? `row-${visible[selected].id}` : undefined,
+  );
+  const modifier = modifierLabel();
+
+  function describe(cause: unknown): string {
+    return cause instanceof Error ? cause.message : String(cause);
+  }
+
+  function showToast(message: string) {
+    toast = message;
+    if (toastTimer) {
+      clearTimeout(toastTimer);
+    }
+    toastTimer = setTimeout(() => {
+      toast = null;
+    }, TOAST_MS);
+  }
+
+  async function refresh() {
+    const request = ++recentRequest;
     try {
-      stats = await invoke<StoreStats>("store_stats");
+      const list = await listHistory({ limit: RECENT_LIMIT });
+      if (request !== recentRequest) {
+        return;
+      }
+      recent = list;
+      status = "idle";
+      errorMessage = null;
     } catch (cause) {
-      error = cause instanceof Error ? cause.message : String(cause);
+      if (request !== recentRequest) {
+        return;
+      }
+      status = "error";
+      errorMessage = describe(cause);
     }
   }
 
-  onMount(async () => {
+  async function runSearch() {
+    const term = query.trim();
+    if (term.length === 0) {
+      return;
+    }
+
+    const request = ++searchRequest;
     try {
-      info = await invoke<AppInfo>("app_info");
-      await refreshStats();
-    } catch (cause) {
-      error = cause instanceof Error ? cause.message : String(cause);
+      const found = await searchHistory(term, kindForFilter(filter), 100);
+      if (request !== searchRequest) {
+        return;
+      }
+      fts = found.length > 0 ? found : null;
+      selected = 0;
+    } catch {
+      // Search failures are non-fatal: keep the instant local results.
+    }
+  }
+
+  // Instant local results, then an authoritative FTS pass after a short idle.
+  $effect(() => {
+    const term = query;
+    const activeFilter = filter;
+    const request = ++searchRequest;
+
+    fts = null;
+    selected = 0;
+
+    if (term.trim().length === 0) {
+      return;
+    }
+
+    const timer = setTimeout(() => {
+      void (async () => {
+        try {
+          const found = await searchHistory(term, kindForFilter(activeFilter), 100);
+          if (request !== searchRequest) {
+            return;
+          }
+          fts = found.length > 0 ? found : null;
+          selected = 0;
+        } catch {
+          // Keep local matches.
+        }
+      })();
+    }, SEARCH_DEBOUNCE_MS);
+
+    return () => clearTimeout(timer);
+  });
+
+  // Clamp selection whenever the visible set changes.
+  $effect(() => {
+    const count = visible.length;
+    if (selected >= count) {
+      selected = Math.max(0, count - 1);
     }
   });
 
   onMount(() => {
+    void refresh();
+
+    const focusInput = () => {
+      document.getElementById("search-input")?.focus();
+    };
+    focusInput();
+    requestAnimationFrame(focusInput);
+
     let disposed = false;
     let unlisten: (() => void) | undefined;
 
     listen("history:changed", () => {
-      captureEvents += 1;
-      void refreshStats();
+      void refresh();
+      if (query.trim().length > 0) {
+        void runSearch();
+      }
     }).then((stop) => {
       if (disposed) {
         stop();
@@ -54,134 +161,189 @@
       }
     });
 
+    window.addEventListener("keydown", onKeydown, true);
+
     return () => {
       disposed = true;
       unlisten?.();
+      window.removeEventListener("keydown", onKeydown, true);
+      if (toastTimer) {
+        clearTimeout(toastTimer);
+      }
     };
   });
+
+  async function activate(index: number) {
+    const item = visible[index];
+    if (!item) {
+      return;
+    }
+
+    if (item.kind !== "text") {
+      showToast("Images and files arrive in v1.0");
+      return;
+    }
+
+    try {
+      await copyItem(item.id);
+      showToast("Copied to clipboard");
+      void refresh();
+    } catch (cause) {
+      showToast(describe(cause));
+    }
+  }
+
+  async function togglePin(index: number) {
+    const item = visible[index];
+    if (!item) {
+      return;
+    }
+
+    try {
+      await pinItem(item.id, !item.isPinned);
+      await refresh();
+      if (query.trim().length > 0) {
+        await runSearch();
+      }
+    } catch (cause) {
+      showToast(describe(cause));
+    }
+  }
+
+  async function removeAt(index: number) {
+    const item = visible[index];
+    if (!item) {
+      return;
+    }
+
+    if (item.isPinned && !window.confirm("Delete this pinned item?")) {
+      return;
+    }
+
+    try {
+      await deleteItem(item.id);
+      await refresh();
+      if (query.trim().length > 0) {
+        await runSearch();
+      }
+    } catch (cause) {
+      showToast(describe(cause));
+    }
+  }
+
+  function setFilter(next: Filter) {
+    filter = next;
+    selected = 0;
+  }
+
+  function cycleFilter(direction: 1 | -1) {
+    const index = FILTERS.indexOf(filter);
+    const next = FILTERS[(index + direction + FILTERS.length) % FILTERS.length];
+    setFilter(next);
+  }
+
+  function onKeydown(event: KeyboardEvent) {
+    const action = mapKey(event, { query, isComposing: composing });
+    if (action.type === "none") {
+      return;
+    }
+
+    event.preventDefault();
+    event.stopPropagation();
+
+    switch (action.type) {
+      case "move":
+        selected = moveSelection(selected, visible.length, action.delta);
+        break;
+      case "edge":
+        selected = action.edge === "start" ? 0 : Math.max(0, visible.length - 1);
+        break;
+      case "select":
+        void activate(selected);
+        break;
+      case "plain":
+        // Plain-text paste becomes distinct in M1-08; copying is identical for
+        // text-only history today.
+        void activate(selected);
+        break;
+      case "quick":
+        void activate(action.index);
+        break;
+      case "filter":
+        cycleFilter(action.direction);
+        break;
+      case "pin":
+        void togglePin(selected);
+        break;
+      case "delete":
+        void removeAt(selected);
+        break;
+      case "close":
+        void hidePalette();
+        break;
+      case "settings":
+        showToast("Settings arrive in M1-10");
+        break;
+      case "block":
+        showToast("App blocking arrives in M2-08");
+        break;
+    }
+  }
 </script>
 
 <main class="shell">
-  <header class="brand" aria-label="Copyfie">
-    <span class="brand-plain">Copy</span><span class="brand-accent">fie</span>
-  </header>
+  <div class="top">
+    <span class="mark" aria-hidden="true">C</span>
+    <SearchBar
+      bind:query
+      {activeDescendant}
+      onCompositionChange={(value) => (composing = value)}
+    />
+  </div>
 
-  <p class="tagline">Clipboard history, instantly.</p>
+  <FilterBar {filter} onSelect={setFilter} />
 
-  <section class="card" aria-live="polite">
-    {#if info}
-      <p class="state state--ok">Tauri bridge connected</p>
-      <dl class="meta">
-        <div><dt>App</dt><dd>{info.name} {info.version}</dd></div>
-        <div><dt>Core</dt><dd>{info.coreVersion}</dd></div>
-        <div><dt>Bundle</dt><dd>{info.identifier}</dd></div>
-        <div>
-          <dt>Store</dt>
-          <dd>
-            {#if stats}
-              {stats.total} item{stats.total === 1 ? "" : "s"} · {stats.text} text · {stats.images} image · {stats.files} files
-            {:else}
-              connecting…
-            {/if}
-          </dd>
-        </div>
-        <div><dt>Events</dt><dd>{captureEvents} history change{captureEvents === 1 ? "" : "s"}</dd></div>
-      </dl>
-      <p class="note">
-        Copy text in any app and it appears here. Capture is X11-only on Linux in v1.0.
-      </p>
-    {:else if error}
-      <p class="state state--error">Bridge unavailable</p>
-      <p class="note">{error}</p>
-    {:else}
-      <p class="state">Connecting to the Tauri bridge…</p>
-    {/if}
-  </section>
+  <ResultList
+    items={visible}
+    {selected}
+    {status}
+    {errorMessage}
+    {query}
+    {showShortcuts}
+    onActivate={(index) => void activate(index)}
+    onHover={(index) => (selected = index)}
+    onRetry={() => void refresh()}
+  />
+
+  <Footer count={visible.length} {toast} {modifier} />
 </main>
 
 <style>
   .shell {
     display: flex;
     flex-direction: column;
-    gap: 12px;
-    padding: 28px;
     height: 100%;
+    background: var(--bg);
   }
 
-  .brand {
-    font-size: 30px;
-    font-weight: 700;
-    letter-spacing: -0.02em;
-    line-height: 1;
-  }
-
-  .brand-plain {
-    color: var(--fg);
-  }
-
-  .brand-accent {
-    background: linear-gradient(135deg, #b9a6ff 0%, #7c5cff 55%, #5b3df0 100%);
-    background-clip: text;
-    -webkit-background-clip: text;
-    color: transparent;
-  }
-
-  .tagline {
-    margin: 0;
-    color: var(--fg-muted);
-    font-size: 13px;
-  }
-
-  .card {
-    margin-top: 8px;
-    padding: 16px;
-    border: 1px solid var(--border);
-    border-radius: 10px;
-    background: var(--bg-elevated);
-  }
-
-  .state {
-    margin: 0;
-    font-size: 13px;
-    font-weight: 600;
-    color: var(--fg-muted);
-  }
-
-  .state--ok {
-    color: var(--accent);
-  }
-
-  .state--error {
-    color: var(--danger);
-  }
-
-  .meta {
-    display: grid;
-    gap: 6px;
-    margin: 14px 0 0;
-    font-size: 12px;
-  }
-
-  .meta div {
+  .top {
     display: flex;
-    gap: 8px;
+    align-items: center;
+    gap: 12px;
+    padding: 14px 16px 12px;
   }
 
-  .meta dt {
-    width: 56px;
+  .mark {
+    display: grid;
+    place-items: center;
+    width: 26px;
+    height: 26px;
     flex: none;
-    color: var(--fg-muted);
-  }
-
-  .meta dd {
-    margin: 0;
-    font-family: var(--font-mono);
-  }
-
-  .note {
-    margin: 14px 0 0;
-    font-size: 12px;
-    line-height: 1.5;
-    color: var(--fg-muted);
+    border-radius: 8px;
+    background: linear-gradient(135deg, #8e74ff, #5b3df0);
+    color: #fff;
+    font-size: 15px;
+    font-weight: 800;
+    letter-spacing: -0.03em;
   }
 </style>

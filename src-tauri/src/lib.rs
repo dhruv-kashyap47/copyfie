@@ -5,6 +5,7 @@
 //! code lives under `platform/`. Keep this crate thin.
 
 mod commands;
+mod platform;
 mod state;
 mod store;
 mod thumbs;
@@ -30,6 +31,13 @@ pub fn run() {
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
             commands::history::store_stats,
+            commands::history::history_list,
+            commands::history::history_search,
+            commands::history::history_pin,
+            commands::history::history_delete,
+            commands::history::history_clear,
+            commands::paste::copy_item,
+            commands::window::hide_palette,
         ])
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
@@ -43,9 +51,14 @@ pub fn run() {
             // the app. They move into AppState when settings/paste land.
             let config = Arc::new(RwLock::new(CaptureConfig::default()));
             let suppressor = Arc::new(Suppressor::new());
-            capture::spawn_capture(app.handle().clone(), store.clone(), config, suppressor);
+            capture::spawn_capture(
+                app.handle().clone(),
+                store.clone(),
+                config,
+                suppressor.clone(),
+            );
 
-            app.manage(AppState::new(store));
+            app.manage(AppState::new(store, suppressor));
             Ok(())
         })
         // Content-addressed thumbnails: copyfie://<hash>.png (macOS/Linux) and

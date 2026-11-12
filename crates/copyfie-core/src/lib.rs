@@ -11,6 +11,7 @@
 pub mod hash;
 pub mod model;
 pub mod retention;
+pub mod search;
 pub mod store;
 
 pub use model::{Item, ItemKind, ItemSummary, ListQuery, NewItem, SourceApp};

@@ -240,7 +240,7 @@ impl Database {
 const SUMMARY_COLUMNS: &str =
     "id, kind, preview, source_app_name, is_pinned, captured_at, thumb_name, byte_size, width, height";
 
-fn summary_from_row(row: &Row<'_>) -> rusqlite::Result<ItemSummary> {
+pub(crate) fn summary_from_row(row: &Row<'_>) -> rusqlite::Result<ItemSummary> {
     Ok(ItemSummary {
         id: row.get(0)?,
         kind: row.get(1)?,

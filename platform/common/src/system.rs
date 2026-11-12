@@ -77,6 +77,18 @@ impl ClipboardReader for SystemClipboard {
     }
 }
 
+/// Write plain text back to the clipboard.
+///
+/// The caller **must** arm echo suppression before calling this; the OS change
+/// notification that follows would otherwise create a duplicate row.
+pub fn write_text(text: &str) -> Result<(), PlatformError> {
+    let context =
+        ClipboardContext::new().map_err(|error| PlatformError::Clipboard(error.to_string()))?;
+    context
+        .set_text(text.to_string())
+        .map_err(|error| PlatformError::Clipboard(error.to_string()))
+}
+
 /// Event-driven (Windows/X11) or cheap-poll (macOS) watcher from `clipboard-rs`.
 pub struct SystemWatcher {
     rx: Receiver<u64>,

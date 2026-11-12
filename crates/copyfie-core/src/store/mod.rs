@@ -12,6 +12,7 @@ mod retention;
 use thiserror::Error;
 
 pub use db::Database;
+pub(crate) use items::summary_from_row;
 
 /// Outcome of an upsert: the row identity plus whether it is new content.
 #[derive(Debug, Clone, Copy, PartialEq, Eq)]

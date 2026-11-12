@@ -289,3 +289,55 @@
 ### Next up
 
 - **M1-06** — palette UI: Svelte shell, list, keyboard, filters, empty/error states.
+
+---
+
+## 2026-11-12 — Session 7 (Milestone 1, M1-06)
+
+**Scope:** M1-06 — palette UI: Svelte shell, list, keyboard, filters, empty/error states.
+
+### Done
+
+- **Search backend (`copyfie-core/src/search`):** FTS5 query builder that quotes every token, doubles embedded quotes, drops punctuation-only tokens, caps input at 200 chars, and uses `"token"*` prefixes. Ranked query: `pinned DESC, bm25(8/3/1), captured_at DESC`, kind filter, 100-row cap. 14 tests cover prefix/substring, source-app matches, pins, kind filters, CJK/emoji, injection strings, limits.
+- **History commands:** `history_list` (kind/pin filters, paging, 100 cap), `history_search`, `history_pin`, `history_delete`, `history_clear`, plus `copy_item` and `hide_palette`. Copy arms echo suppression **before** the clipboard write and clears it if the write fails.
+- **Palette shell:** `SearchBar`, `FilterBar`, `ResultList`, `ResultRow`, `Footer`, and `App`; global tokens; strict CSP unchanged.
+- **Instant + authoritative search:** each keystroke filters the loaded 100 summaries synchronously (`localSearch.ts`, ranked prefix → word-start → substring → subsequence, pins first) and a 50 ms debounce then asks FTS5. Empty FTS results keep local fuzzy matches. Stale responses are dropped by request id.
+- **Keyboard (`keymap.ts`, pure reducer):** arrows wrap, PageUp/Down ±8 clamp, Home/End, Enter, Shift+Enter, bare `1–9` only when the query is empty, `Cmd/Ctrl+1–9` always, Esc, Tab/Shift+Tab filter cycling, `Cmd/Ctrl+P` pin, `Cmd/Ctrl+Backspace` delete (confirm for pinned), `Cmd/Ctrl+,` settings placeholder, `Cmd/Ctrl+B` block placeholder. IME composition ignores all shortcuts.
+- **States/a11y:** combobox + listbox + option roles, `aria-activedescendant`, focus ring, reduced-motion support, loading skeleton, empty history, no-matches, error + retry, footer toast, live `history:changed` refresh.
+- **Copy-only selection:** Enter copies the selected text item back to the clipboard with suppression; full focus-restore + synthetic paste lands in M1-08.
+
+### Plan conflict resolved
+
+PLAN §7 lists `Ctrl+P`/`Ctrl+N` as arrow alternatives and also `Cmd/Ctrl+P` as pin/unpin. On Windows both are the same chord. **Pin wins**; Ctrl+N/P navigation is dropped. Arrows, PageUp/Down, Home/End cover navigation. Tested explicitly.
+
+### End-to-end verification (Windows 11, UI Automation)
+
+- Palette renders the two captured items with source avatars, relative times, type labels, quick-paste numbers, and footer hints.
+- Typing `Captured` in the search box (UIA ValuePattern) narrowed the list to **1 item**; Enter copied it: `Get-Clipboard` returned `Captured from another app 2026-11-12`, and the footer showed **“Copied to clipboard”**.
+- `Ctrl+P` pinned the selected row (`is_pinned = 1` in SQLite); the **Pinned** filter showed exactly that row with the pin glyph.
+- Copy did **not** create a duplicate or bump `captured_at`; `use_count` went to 1 — echo suppression works through the real OS clipboard path.
+- Tab cycling updated the selected filter chip (UIA `SelectionItem.IsSelected`: Text → … → Pinned).
+
+### Verification
+
+- `npm run check` → 0 errors, 0 warnings; `npm test` → **22 passed** (keymap, local search, formatting).
+- `npm run build` → **23.5 KB gzipped** JS+CSS (50 KB budget).
+- `cargo test --workspace` → **104 passed** (40 app + 35 core unit + 18 core integration + 4 common + 3 Windows + 4 Linux).
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings` → clean.
+
+### Measurements
+
+- Frontend: JS 21.6 KB gz + CSS 1.8 KB gz = **23.5 KB** (target <50 KB).
+- Local filter on a 10k synthetic list: test asserts <100 ms (actual single-digit ms on this machine).
+- UI render: two rows, no layout shift; palette window 680×480.
+
+### Notes / follow-ups
+
+- The palette is still the visible launch window; **M1-07** makes it hidden/pre-warmed and positions it under the cursor monitor.
+- Enter copies but does not hide/paste; **M1-08** owns focus restore and synthetic input.
+- Delete was verified at the store and keymap level but not end-to-end: UIA focus moved to another window before the synthetic keystroke, so it was not a reliable assertion. Re-check in M1-13 manual pass.
+- Image/file rows render placeholders; their capture is M2-04/M2-05.
+
+### Next up
+
+- **M1-07** — pre-warm + show/focus + multi-monitor positioning.
