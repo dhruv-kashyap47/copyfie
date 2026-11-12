@@ -47,7 +47,11 @@ copy of this file.
 | `tauri` | Apache-2.0 OR MIT | Application shell, webview, IPC |
 | `tauri-build` | Apache-2.0 OR MIT | Build-time context generation |
 | `serde` | MIT OR Apache-2.0 | Serialization |
-| `serde_json` | MIT OR Apache-2.0 | JSON IPC, settings |
+| `serde_json` | MIT OR Apache-2.0 | JSON IPC, settings, file-path payloads |
+| `rusqlite` | MIT | SQLite bindings (bundles public-domain SQLite + FTS5) |
+| `blake3` | CC0-1.0 OR Apache-2.0 | Content hashing and dedupe identity |
+| `thiserror` | MIT OR Apache-2.0 | Error types |
+| `tempfile` | MIT OR Apache-2.0 | Atomic staging and tests (dev) |
 | `copyfie-core` | Proprietary (internal) | Models, store, search — not published |
 
 ## 3. Direct JavaScript dependencies

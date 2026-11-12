@@ -7,17 +7,15 @@
 //! - No Tauri types.
 //! - No OS/platform APIs. Everything here must be unit-testable headlessly.
 //! - No clipboard reads. Payloads are handed in by the platform layer.
-//!
-//! Modules are added as the corresponding M1 tasks land (`model`, `hash`,
-//! `store`, `search`, `settings`, `retention`).
+
+pub mod hash;
+pub mod model;
+pub mod retention;
+pub mod store;
+
+pub use model::{Item, ItemKind, ItemSummary, ListQuery, NewItem, SourceApp};
+pub use retention::Retention;
+pub use store::{Database, InsertOutcome, StoreError};
 
 /// Semantic version of the core crate, for diagnostics.
 pub const VERSION: &str = env!("CARGO_PKG_VERSION");
-
-#[cfg(test)]
-mod tests {
-    #[test]
-    fn version_is_reported() {
-        assert!(!super::VERSION.is_empty());
-    }
-}

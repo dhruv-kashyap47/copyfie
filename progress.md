@@ -90,3 +90,49 @@
 ### Next up
 
 - **M1-02** — `copyfie-core`: models, BLAKE3 hashing/canonicalization, SQLite schema + migrations, dedupe, basic retention, unit tests.
+
+---
+
+## 2026-11-12 — Session 3 (Milestone 1, M1-02)
+
+**Scope:** M1-02 — `copyfie-core` models, BLAKE3 hashing/canonicalization, SQLite schema + migrations, dedupe, basic retention, tests.
+
+### Done
+
+- **`model.rs`:** `ItemKind` (text/image/files), `Item` (full row), `ItemSummary` (palette payload, camelCase serde), `SourceApp`, `NewItem` with `text()` / `files()` constructors, `make_preview` (400 chars, code-point safe), `ListQuery`.
+- **`hash.rs`:** CRLF→LF + trailing-NUL canonicalization, BLAKE3-256 `hash_text`/`hash_bytes`, path normalization (keeps `/` and `C:\` roots, trims trailing separators), order-insensitive `hash_files`, `hash_image_rgba` (pixels + dimensions, ready for M2-04).
+- **`retention.rs`:** `Retention::{Days, Forever}` with `0 = Forever` sentinel, 1–365 clamping, saturating expiry math, `DAY_MS`.
+- **`store/`:** `Database` (file + in-memory) with the PLAN §5 pragma set (WAL, NORMAL, foreign keys, 8 MB cache, mmap, secure_delete, incremental auto_vacuum + one-time VACUUM on upgrade). Forward-only migrations via `PRAGMA user_version`, future schema refused. Atomic dedupe upsert on `(kind, content_hash)` with pin/expiry preservation and `is_new`. Listing with kind/pin filters and paging, pin/unpin with expiry recompute, `touch_used`, delete, clear (keep pins), meta key/value, per-kind counts, age cleanup and incremental vacuum.
+- **Migrations:** `0001_init.sql` (meta + items), `0002_fts.sql` (external-content FTS5 + insert/delete/update triggers, `unicode61 remove_diacritics 2`, `prefix='2 3'`, `fts_built` flag), `0003_indexes.sql` (unique dedupe index, recency, pins, partial expiry, source app).
+- **Tests:** **38 passing** — 21 unit (hashing, preview, retention, migration, FTS triggers) + 17 integration (dedupe, canonicalization, recopy source/use_count, pins, retention boundary, list order/filters/paging, clear, meta, counts, file dedupe).
+
+### Decisions
+
+- **Migrations live in `crates/copyfie-core/migrations/`**, not `src-tauri/migrations/` as sketched in PLAN §4. The store crate owns the schema; `include_str!` stays inside one crate and core remains free of Tauri. File names still match the plan (`0001_init`, `0002_fts`, `0003_indexes`).
+- **rusqlite 0.42:** the separate `fts5` feature no longer exists; FTS5 is compiled into the `bundled` build. Verified by FTS trigger tests. `rusqlite` requires Rust ≥1.89.
+- **`is_new` uses `RETURNING ... (first_seen_at = captured_at)`**, not `excluded.captured_at`: SQLite's `RETURNING` cannot reference the `excluded` pseudo-table. Edge case: a recopy in the same millisecond as first capture reports `is_new = true`; no data effect (single-writer actor in M1-03 serializes writes).
+- **Files payload keeps display order, hash ignores order.** `NewItem::files` stores the JSON array in selection order (Explorer/Nautilus order is meaningful) while `hash_files` sorts + trims for identity.
+- **`Retention` lives at crate root** (policy), DB cleanup in `store/retention.rs` (SQL).
+- **`secure_delete=ON`** from day one so deleted text is zeroed on disk.
+
+### Verification
+
+- `cargo test -p copyfie-core` → 38 passed, 0 failed.
+- `cargo fmt --all`, `cargo clippy --workspace --all-targets -- -D warnings` → clean.
+- `cargo deny --config scripts/license/cargo-deny.toml check` → advisories/bans/licenses/sources all ok.
+- FTS5 confirmed working in the bundled SQLite via schema-level tests (insert → match, recopy reindex, delete, retention cleanup).
+
+### Measurements
+
+- Core crate test suite: ~0.11 s total (21 unit + 17 integration), in-memory and temp-file DBs.
+- Schema at v3; no migration cost yet. Insert/search benchmarks deferred to M1-11.
+
+### Notes / follow-ups
+
+- `store::items::upsert` is synchronous and takes `&self`; M1-03 wraps it in the single-writer actor and adds the coalesced `history:changed` event.
+- Search query building (secure FTS `MATCH` escaping) is still to come; the FTS table + triggers are ready and tested.
+- Pinned items are excluded from age cleanup by `expires_at = NULL`, so retention SQL never needs a pin join.
+
+### Next up
+
+- **M1-03** — store actor + custom URI protocol for thumbnails (stub).
