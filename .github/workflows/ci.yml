@@ -1,0 +1,95 @@
+name: CI
+
+on:
+  push:
+    branches: [main]
+  pull_request:
+  workflow_dispatch:
+
+concurrency:
+  group: ci-${{ github.ref }}
+  cancel-in-progress: true
+
+permissions:
+  contents: read
+
+env:
+  CARGO_TERM_COLOR: always
+
+jobs:
+  frontend:
+    name: Frontend (type check, tests, bundle)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - run: npm ci
+      - name: Type check
+        run: npm run check
+      - name: Unit tests
+        run: npm test
+      - name: Production build
+        run: npm run build
+      - name: Bundle size budget
+        run: npm run size:check
+
+  rust:
+    name: Rust (${{ matrix.os }})
+    strategy:
+      fail-fast: false
+      matrix:
+        os: [ubuntu-22.04, windows-latest, macos-14]
+    runs-on: ${{ matrix.os }}
+    steps:
+      - uses: actions/checkout@v4
+      - uses: actions/setup-node@v4
+        with:
+          node-version: 24
+          cache: npm
+      - uses: dtolnay/rust-toolchain@stable
+        with:
+          components: rustfmt, clippy
+      - uses: Swatinem/rust-cache@v2
+      - name: Install Linux dependencies
+        if: matrix.os == 'ubuntu-22.04'
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y \
+            libwebkit2gtk-4.1-dev \
+            libgtk-3-dev \
+            libayatana-appindicator3-dev \
+            librsvg2-dev \
+            patchelf \
+            libxdo-dev
+      - name: Frontend assets (required by tauri::generate_context)
+        run: |
+          npm ci
+          npm run build
+      - name: Format
+        run: cargo fmt --all --check
+      - name: Clippy
+        run: cargo clippy --workspace --all-targets -- -D warnings
+      - name: Tests
+        run: cargo test --workspace
+      - name: Build app (debug, no bundle)
+        run: cargo build -p copyfie
+
+  licenses:
+    name: Licenses and advisories
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+      - uses: taiki-e/install-action@cargo-deny
+      - name: cargo-deny (allowlist, bans, sources, advisories)
+        run: cargo deny --config scripts/license/cargo-deny.toml check
+      - name: npm audit (runtime dependencies)
+        run: npm audit --omit=dev --audit-level=high
+      - name: Attribution files present
+        run: |
+          test -f NOTICE
+          test -f THIRD_PARTY.md
+          test -f third_party/licenses/ortu-MIT.txt
+          test -f third_party/licenses/ropy-MIT.txt

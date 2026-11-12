@@ -1,0 +1,33 @@
+Copyfie
+Copyright © 2026 Copyfie. All rights reserved.
+
+This product is proprietary, closed-source software. It is not published under
+an open-source license; use is governed by the Copyfie EULA shipped with the
+product. Nothing in this file grants rights to the Copyfie source code.
+
+-------------------------------------------------------------------------------
+Third-party attribution
+-------------------------------------------------------------------------------
+
+This product includes ideas and, where noted in THIRD_PARTY.md, code adapted
+from the following MIT-licensed projects:
+
+  Portions adapted from Ortu, Copyright (c) 2025-2026 Abhijith P Subash, MIT.
+  https://github.com/abhijith-p-subash/ortu
+
+  Portions adapted from Ropy, Copyright 2025-2026 The Ropy Authors, MIT.
+  https://github.com/StudentWeis/ropy
+
+The full MIT permission notices are reproduced verbatim in:
+
+  third_party/licenses/ortu-MIT.txt
+  third_party/licenses/ropy-MIT.txt
+
+and are embedded in THIRD_PARTY.md, which ships with every build (About →
+Open-source notices) and with the installers.
+
+Neither project's name, logo, or branding is used by Copyfie. They are credited
+as prior art and inspiration only.
+
+All other third-party dependencies are listed, with their licenses, in
+THIRD_PARTY.md.

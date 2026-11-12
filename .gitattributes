@@ -1,0 +1,17 @@
+* text=auto eol=lf
+
+# Windows scripts and shells that require CRLF
+*.ps1 text eol=crlf
+*.bat text eol=crlf
+*.cmd text eol=crlf
+
+# Shell scripts must stay LF
+*.sh text eol=lf
+
+# Binary assets
+*.png binary
+*.ico binary
+*.icns binary
+*.jpg binary
+*.jpeg binary
+*.woff2 binary

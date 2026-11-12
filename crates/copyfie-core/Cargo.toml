@@ -1,0 +1,8 @@
+[package]
+name = "copyfie-core"
+version.workspace = true
+edition.workspace = true
+publish = false
+description = "Copyfie core: models, hashing, SQLite store, search, and retention"
+
+[dependencies]

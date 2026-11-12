@@ -1,0 +1,7 @@
+{
+  "$schema": "../gen/schemas/desktop-schema.json",
+  "identifier": "palette",
+  "description": "Palette window: core events plus Copyfie's own commands. No filesystem, shell, or HTTP permissions in the webview.",
+  "windows": ["main"],
+  "permissions": ["core:event:default"]
+}

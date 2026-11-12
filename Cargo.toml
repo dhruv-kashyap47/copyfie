@@ -1,0 +1,22 @@
+[workspace]
+resolver = "2"
+members = ["src-tauri", "crates/copyfie-core"]
+
+[workspace.package]
+version = "0.1.0"
+edition = "2021"
+publish = false
+
+# Release profile per PLAN.md §8. Applies to shipping binaries only; never to
+# `cargo test`/`clippy`.
+[profile.release]
+opt-level = "s"
+lto = "fat"
+codegen-units = 1
+panic = "abort"
+strip = "symbols"
+
+# Search/store hot paths keep full optimization even though the rest of the
+# binary favors size.
+[profile.release.package.copyfie-core]
+opt-level = 3
