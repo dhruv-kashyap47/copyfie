@@ -403,31 +403,33 @@
   }
 </script>
 
-<main class="shell">
-  <div class="top">
-    <span class="mark" aria-hidden="true">C</span>
-    <SearchBar
-      bind:query
-      {activeDescendant}
-      onCompositionChange={(value) => (composing = value)}
+<main class="shell glass-shell">
+  <div class="well glass-well">
+    <div class="top">
+      <span class="mark" aria-hidden="true">C</span>
+      <SearchBar
+        bind:query
+        {activeDescendant}
+        onCompositionChange={(value) => (composing = value)}
+      />
+    </div>
+
+    <FilterBar {filter} onSelect={setFilter} />
+
+    <ResultList
+      items={visible}
+      {selected}
+      {status}
+      {errorMessage}
+      {query}
+      {showShortcuts}
+      onActivate={(index) => void activate(index)}
+      onHover={(index) => (selected = index)}
+      onRetry={() => void refresh()}
     />
+
+    <Footer count={visible.length} {toast} {modifier} />
   </div>
-
-  <FilterBar {filter} onSelect={setFilter} />
-
-  <ResultList
-    items={visible}
-    {selected}
-    {status}
-    {errorMessage}
-    {query}
-    {showShortcuts}
-    onActivate={(index) => void activate(index)}
-    onHover={(index) => (selected = index)}
-    onRetry={() => void refresh()}
-  />
-
-  <Footer count={visible.length} {toast} {modifier} />
 
   {#if hotkeyBlocked && hotkey}
     <HotkeySetup
@@ -444,30 +446,39 @@
 <style>
   .shell {
     display: flex;
-    flex-direction: column;
     height: 100%;
-    background: var(--bg);
+    padding: 8px;
     position: relative;
+  }
+
+  .well {
+    display: flex;
+    flex: 1;
+    min-width: 0;
+    min-height: 0;
+    flex-direction: column;
+    overflow: hidden;
   }
 
   .top {
     display: flex;
     align-items: center;
-    gap: 12px;
-    padding: 14px 16px 12px;
+    gap: 10px;
+    padding: 12px 14px 10px;
   }
 
   .mark {
     display: grid;
     place-items: center;
-    width: 26px;
-    height: 26px;
+    width: 28px;
+    height: 28px;
     flex: none;
-    border-radius: 8px;
-    background: linear-gradient(135deg, #8e74ff, #5b3df0);
-    color: #fff;
+    border-radius: 9px;
+    background: var(--mark-bg);
+    color: var(--mark-fg);
     font-size: 15px;
     font-weight: 800;
     letter-spacing: -0.03em;
+    box-shadow: inset 0 1px 0 rgb(255 255 255 / 30%);
   }
 </style>

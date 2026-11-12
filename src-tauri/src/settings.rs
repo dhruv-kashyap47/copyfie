@@ -17,7 +17,7 @@ use serde_json::{Map, Value};
 
 pub const DEFAULT_HOTKEY: &str = "CommandOrControl+Shift+Space";
 pub const DEFAULT_THEME: &str = "system";
-pub const DEFAULT_ACCENT: &str = "#9D86FF";
+pub const DEFAULT_ACCENT: &str = "#5B9DFF";
 pub const DEFAULT_RETENTION_DAYS: u32 = 30;
 pub const DEFAULT_PALETTE_READY: &str = "auto";
 pub const DEFAULT_PALETTE_IDLE_MINUTES: u32 = 10;
@@ -288,13 +288,13 @@ mod tests {
     fn sanitizes_theme_accent_and_retention() {
         let settings = Settings {
             theme: "LIGHT".to_string(),
-            accent: " 5b3df0 ".to_string(),
+            accent: " 1e5bd7 ".to_string(),
             retention_days: 9_999,
             ..Settings::default()
         }
         .sanitized();
         assert_eq!(settings.theme, "light");
-        assert_eq!(settings.accent, "#5B3DF0");
+        assert_eq!(settings.accent, "#1E5BD7");
         assert_eq!(settings.retention_days, 365);
 
         let fallback = Settings {

@@ -1,0 +1,188 @@
+﻿{
+    "capturedAt":  "2026-11-12T19:55:28.5507809+05:30",
+    "platform":  "windows",
+    "label":  "after-final-hidden",
+    "durationSeconds":  60,
+    "intervalSeconds":  2,
+    "logicalProcessors":  12,
+    "samples":  29,
+    "avgPercentOneCore":  0.08,
+    "maxPercentOneCore":  0.75,
+    "avgPercentMachine":  0.006,
+    "series":  [
+                   {
+                       "at":  "2026-11-12T19:54:29.8391867+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:31.9583326+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:34.0466536+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:36.1349551+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:38.2350521+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:40.3171395+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:42.4057205+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:44.4940961+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:46.5820549+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:48.6852328+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:50.7695657+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:52.8565186+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:54.9442954+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:57.0354987+05:30",
+                       "deltaCpuSeconds":  0.016,
+                       "percentOneCore":  0.75,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:54:59.1235129+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:01.2109292+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:03.3168588+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:05.4040647+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:07.4905443+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:09.5874331+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:11.6831217+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:13.7690243+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:15.8703430+05:30",
+                       "deltaCpuSeconds":  0.016,
+                       "percentOneCore":  0.74,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:17.9701200+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:20.0553553+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:22.1456948+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:24.2391752+05:30",
+                       "deltaCpuSeconds":  0.016,
+                       "percentOneCore":  0.75,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:26.3437018+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   },
+                   {
+                       "at":  "2026-11-12T19:55:28.4482691+05:30",
+                       "deltaCpuSeconds":  0,
+                       "percentOneCore":  0,
+                       "processes":  7
+                   }
+               ]
+}

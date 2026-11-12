@@ -18,10 +18,21 @@ from the following MIT-licensed projects:
   Portions adapted from Ropy, Copyright 2025-2026 The Ropy Authors, MIT.
   https://github.com/StudentWeis/ropy
 
-The full MIT permission notices are reproduced verbatim in:
+  Lucide icons, Copyright (c) 2026 Lucide Icons and Contributors, ISC.
+  Search, x, image, folder and pin also include Feather-derived paths,
+  Copyright (c) 2013-present Cole Bemis, MIT.
+  https://lucide.dev
+
+  Geist Sans, Copyright (c) 2023 Vercel, in collaboration with
+  basement.studio, SIL Open Font License 1.1.
+  https://vercel.com/font
+
+The full permission notices are reproduced verbatim in:
 
   third_party/licenses/ortu-MIT.txt
   third_party/licenses/ropy-MIT.txt
+  third_party/licenses/lucide-ISC.txt
+  third_party/licenses/geist-OFL.txt
 
 and are embedded in THIRD_PARTY.md, which ships with every build (About →
 Open-source notices) and with the installers.

@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { icons } from "../lib/icons";
+
   let {
     query = $bindable(""),
     activeDescendant = undefined,
@@ -19,10 +21,18 @@
   }
 </script>
 
-<div class="search">
-  <svg class="icon" viewBox="0 0 20 20" aria-hidden="true">
-    <circle cx="8.5" cy="8.5" r="5.5" fill="none" stroke="currentColor" stroke-width="1.6" />
-    <path d="M12.8 12.8 16.5 16.5" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
+<div class="search-field glass-inset">
+  <svg
+    class="icon"
+    viewBox="0 0 24 24"
+    fill="none"
+    stroke="currentColor"
+    stroke-width="2"
+    stroke-linecap="round"
+    stroke-linejoin="round"
+    aria-hidden="true"
+  >
+    {@html icons.search}
   </svg>
 
   <input
@@ -44,24 +54,42 @@
   />
 
   {#if query.length > 0}
-    <button type="button" class="clear" aria-label="Clear search" onclick={clear}>×</button>
+    <button type="button" class="clear glass-control pressable" aria-label="Clear search" onclick={clear}>
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="2"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        {@html icons.x}
+      </svg>
+    </button>
   {/if}
 </div>
 
 <style>
-  .search {
+  .search-field {
     display: flex;
     align-items: center;
-    gap: 10px;
+    gap: 8px;
     flex: 1;
     min-width: 0;
+    padding: 7px 7px 7px 10px;
+  }
+
+  .search-field:focus-within {
+    border-color: var(--focus);
+    box-shadow: 0 0 0 1px var(--focus);
   }
 
   .icon {
-    width: 18px;
-    height: 18px;
+    width: 16px;
+    height: 16px;
     flex: none;
-    color: var(--fg-muted);
+    color: var(--fg-subtle);
   }
 
   input {
@@ -72,31 +100,33 @@
     border: none;
     outline: none;
     color: var(--fg);
-    font-size: 15px;
+    font-size: var(--font-size-lg);
     user-select: text;
     cursor: text;
   }
 
   input::placeholder {
-    color: var(--fg-muted);
+    color: var(--fg-subtle);
   }
 
   .clear {
-    flex: none;
+    display: grid;
+    place-items: center;
     width: 22px;
     height: 22px;
+    flex: none;
     padding: 0;
-    border: 1px solid var(--border);
     border-radius: 6px;
-    background: transparent;
     color: var(--fg-muted);
-    font-size: 14px;
-    line-height: 1;
     cursor: pointer;
   }
 
   .clear:hover {
     color: var(--fg);
-    background: var(--row-hover);
+  }
+
+  .clear svg {
+    width: 12px;
+    height: 12px;
   }
 </style>

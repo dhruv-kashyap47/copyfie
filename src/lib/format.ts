@@ -41,7 +41,7 @@ export function formatBytes(bytes: number): string {
   return `${(bytes / (1024 * 1024 * 1024)).toFixed(1)} GB`;
 }
 
-const SOURCE_HUES = [262, 220, 292, 338, 24, 158];
+const SOURCE_HUES = [214, 196, 174, 32, 158, 348];
 
 /** Stable colored initial background for a source app name. */
 export function sourceColor(name: string | null): string {
@@ -50,7 +50,7 @@ export function sourceColor(name: string | null): string {
   for (let index = 0; index < value.length; index += 1) {
     hash = (hash * 31 + value.charCodeAt(index)) >>> 0;
   }
-  return `hsl(${SOURCE_HUES[hash % SOURCE_HUES.length]} 62% 62%)`;
+  return `hsl(${SOURCE_HUES[hash % SOURCE_HUES.length]} 58% 60%)`;
 }
 
 export function sourceInitial(name: string | null): string {

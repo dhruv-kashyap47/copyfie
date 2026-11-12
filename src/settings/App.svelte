@@ -17,7 +17,7 @@
 
   let view = $state<SettingsView | null>(null);
   let theme = $state<Theme>("system");
-  let accent = $state("#9D86FF");
+  let accent = $state("#5B9DFF");
   let retention = $state<number>(30);
   let paused = $state(false);
   let launchAtLogin = $state(false);
@@ -204,7 +204,10 @@
 </script>
 
 <header>
-  <h1>Copyfie Settings</h1>
+  <div class="header-copy">
+    <h1>Copyfie Settings</h1>
+    <p>Local history, appearance and startup.</p>
+  </div>
   <span class="state">{saving ? "Saving…" : (status ?? "")}</span>
 </header>
 
@@ -234,16 +237,6 @@
             </button>
           {/each}
         </div>
-      </div>
-      <div class="row">
-        <label for="accent">Accent</label>
-        <input
-          id="accent"
-          type="color"
-          bind:value={accent}
-          onchange={persist}
-          aria-label="Accent color"
-        />
       </div>
     </section>
 
@@ -361,48 +354,59 @@
 {/if}
 
 <style>
-  :global(body) {
-    user-select: none;
-  }
-
   header {
     display: flex;
-    align-items: baseline;
+    align-items: flex-start;
     justify-content: space-between;
-    padding: 18px 22px 10px;
+    gap: 16px;
+    padding: 20px 20px 14px;
+  }
+
+  .header-copy {
+    min-width: 0;
   }
 
   h1 {
     margin: 0;
-    font-size: 16px;
+    font-size: var(--font-size-xl);
     letter-spacing: -0.01em;
   }
 
+  .header-copy p {
+    margin: 4px 0 0;
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
+  }
+
   .state {
-    font-size: 11px;
-    color: var(--accent);
+    flex: none;
+    padding-top: 2px;
+    font-size: var(--font-size-xs);
+    color: var(--fg-muted);
   }
 
   main {
-    padding: 0 22px 22px;
+    padding: 0 20px 24px;
   }
 
   section {
-    padding: 14px 0;
-    border-bottom: 1px solid var(--border);
+    margin-bottom: 10px;
+    padding: 14px 16px;
+    border: 1px solid var(--border);
+    border-radius: var(--radius-well);
+    background: var(--bg-elevated);
   }
 
   section:last-child {
-    border-bottom: none;
+    margin-bottom: 0;
   }
 
   h2 {
     margin: 0 0 10px;
-    font-size: 11px;
+    font-size: var(--font-size-sm);
     font-weight: 700;
-    letter-spacing: 0.06em;
-    text-transform: uppercase;
-    color: var(--fg-muted);
+    letter-spacing: 0.01em;
+    color: var(--fg);
   }
 
   .row {
@@ -413,30 +417,24 @@
     min-height: 34px;
   }
 
-  label {
-    color: var(--fg);
-  }
-
+  label,
   .label {
     color: var(--fg);
+    font-size: var(--font-size-sm);
   }
 
-  select,
-  input[type="color"] {
-    min-width: 120px;
+  select {
+    min-width: 130px;
     padding: 5px 8px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    background: var(--bg-elevated);
+    border: var(--control-border-width) solid var(--control-border);
+    border-radius: var(--radius-sm);
+    background: var(--control-bg);
     color: var(--fg);
   }
 
-  input[type="color"] {
-    width: 46px;
-    min-width: 46px;
-    height: 28px;
-    padding: 2px;
-    cursor: pointer;
+  select:focus-visible {
+    border-color: var(--focus);
+    outline: none;
   }
 
   input[type="checkbox"] {
@@ -448,23 +446,32 @@
 
   .segmented {
     display: flex;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    overflow: hidden;
+    gap: 2px;
+    padding: 2px;
+    border: var(--control-border-width) solid var(--control-border);
+    border-radius: var(--radius-sm);
+    background: var(--track-bg);
   }
 
   .segmented button {
     padding: 5px 10px;
     border: none;
+    border-radius: 6px;
     background: transparent;
     color: var(--fg-muted);
-    font-size: 11.5px;
+    font-size: var(--font-size-xs);
     cursor: pointer;
+  }
+
+  .segmented button:hover {
+    background: var(--control-hover);
+    color: var(--fg);
   }
 
   .segmented button.active {
     background: var(--row-selected);
     color: var(--fg);
+    box-shadow: inset 0 0 0 1px var(--row-selected-border);
   }
 
   .shortcut {
@@ -475,42 +482,55 @@
 
   kbd {
     padding: 2px 6px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--control-border);
     border-radius: 5px;
+    background: var(--control-bg);
+    color: var(--fg);
     font-family: var(--font-mono);
     font-size: 11px;
-    color: var(--fg);
   }
 
   .shortcut button,
   .recorder-actions button,
   .empty button {
     padding: 5px 10px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    background: var(--bg-elevated);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
+    background: var(--control-bg);
     color: var(--fg);
-    font-size: 11.5px;
+    font-size: var(--font-size-xs);
     cursor: pointer;
+    transition: transform var(--dur-press) var(--ease);
   }
 
   .shortcut button:hover,
   .recorder-actions button:hover,
   .empty button:hover {
-    background: var(--row-hover);
+    background: var(--control-hover);
+  }
+
+  .shortcut button:active,
+  .recorder-actions button:active,
+  .empty button:active {
+    transform: scale(0.98);
   }
 
   .recorder {
     display: grid;
     place-items: center;
-    min-height: 44px;
+    min-height: 46px;
     margin-top: 8px;
-    border: 1px dashed var(--accent);
-    border-radius: 8px;
-    background: var(--bg);
+    border: 1px dashed var(--control-border);
+    border-radius: var(--radius-control);
+    background: var(--field-bg);
     font-family: var(--font-mono);
     font-size: 12.5px;
     cursor: text;
+  }
+
+  .recorder:focus-visible {
+    border-color: var(--accent);
+    outline: none;
   }
 
   .placeholder {
@@ -530,7 +550,7 @@
 
   .hint {
     margin: 8px 0 0;
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     line-height: 1.5;
     color: var(--fg-muted);
   }
@@ -545,17 +565,17 @@
     display: flex;
     align-items: center;
     gap: 5px;
-    font-size: 11px;
+    font-size: var(--font-size-xs);
     color: var(--fg-muted);
   }
 
   .clear-actions .danger {
     padding: 5px 10px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
     background: transparent;
     color: var(--danger);
-    font-size: 11.5px;
+    font-size: var(--font-size-xs);
     cursor: pointer;
   }
 
@@ -564,13 +584,13 @@
   }
 
   .clear-actions .danger:disabled {
-    opacity: 0.5;
+    opacity: 0.45;
     cursor: default;
   }
 
   .about p {
     margin: 0 0 6px;
-    font-size: 11.5px;
+    font-size: var(--font-size-xs);
     line-height: 1.5;
     color: var(--fg-muted);
   }
@@ -589,13 +609,13 @@
 
   .detail {
     margin: 0 0 12px;
-    font-size: 12px;
+    font-size: var(--font-size-sm);
   }
 
   footer.error {
-    padding: 8px 22px;
+    padding: 8px 20px;
     border-top: 1px solid var(--border);
     color: var(--danger);
-    font-size: 11.5px;
+    font-size: var(--font-size-xs);
   }
 </style>

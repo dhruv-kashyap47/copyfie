@@ -369,7 +369,7 @@ impl PaletteManager {
             .inner_size(680.0, 480.0)
             .resizable(false)
             .decorations(false)
-            .transparent(false)
+            .transparent(true)
             .always_on_top(true)
             .skip_taskbar(true)
             .visible(false)
@@ -378,8 +378,13 @@ impl PaletteManager {
             .theme(window_theme)
             .initialization_script(&script);
 
+        // The glass shell is drawn in CSS; the window itself must be
+        // transparent. On Windows, skipping the redirection bitmap avoids the
+        // white flash while the transparent webview first paints.
         #[cfg(target_os = "windows")]
-        let builder = builder.additional_browser_args(BROWSER_ARGS);
+        let builder = builder
+            .no_redirection_bitmap(true)
+            .additional_browser_args(BROWSER_ARGS);
 
         builder.build().map_err(|error| {
             log::error!(target: "copyfie::palette", "could not create the palette window: {error}");

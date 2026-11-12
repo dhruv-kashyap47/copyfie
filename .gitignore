@@ -72,3 +72,6 @@ playwright-report/
 .copilot/
 .claude/
 .opencode/
+
+# Local browser/test artifacts
+.playwright-mcp/

@@ -24,7 +24,8 @@ Every copied or adapted file carries a header such as:
 | Our file | Upstream repo | Upstream commit | License | What changed |
 |---|---|---|---|---|
 | `platform/macos/src/concealed.rs` | Ortu | v2.1.0 `b5747d3195fd2c52faf296d7489857499fc3021f` | MIT | Pasteboard marker list informed by Ortu's clipboard handling; implementation written from scratch. |
-| _(no copied code yet)_ | — | — | — | Windows/X11 backends are original; only prior-art ideas from PLAN §2 are used. |
+| `src/lib/icons.ts` | Lucide (lucide-static) | v1.72.0 | ISC; some paths MIT (Feather) | Inner SVG paths for search, x, text, image, files and pin; adapted for Svelte rendering. |
+| _(other UI code)_ | — | — | — | Windows/X11 backends and the palette/settings UI are original; only prior-art ideas from PLAN §2 are used. |
 
 Reference projects and their pinned revisions used for study and adaptation:
 
@@ -32,6 +33,7 @@ Reference projects and their pinned revisions used for study and adaptation:
 |---|---|---|---|---|
 | Ortu | v2.1.0 | `b5747d3195fd2c52faf296d7489857499fc3021f` | MIT | `third_party/licenses/ortu-MIT.txt` |
 | Ropy | 0.6.2 | `0d7ac38fcc6883205d400d6849d8977e4f1572e4` | MIT | `third_party/licenses/ropy-MIT.txt` |
+| Lucide (lucide-static) | 1.72.0 | npm release | ISC; Feather-derived paths MIT | `third_party/licenses/lucide-ISC.txt` |
 
 Both projects are MIT-licensed. MIT permits sublicensing, modification, and
 closed distribution provided the copyright and permission notices are retained.
@@ -84,6 +86,18 @@ copy of this file.
 | `svelte-check` | MIT | Svelte type checking (dev only) |
 | `vitest` | MIT | Unit tests (dev only) |
 | `@tauri-apps/cli` | Apache-2.0 OR MIT | Tauri CLI (dev only) |
+
+Lucide is **not** a runtime dependency: only the paths used by `src/lib/icons.ts` are copied,
+with the notice in `third_party/licenses/lucide-ISC.txt`.
+
+### Bundled fonts
+
+| Font | Version | License | Purpose | Text |
+|---|---|---|---|---|
+| Geist Sans | 1.5.1 | SIL OFL 1.1 | Palette and settings UI typeface | `third_party/licenses/geist-OFL.txt` |
+
+The font is a self-hosted variable WOFF2 file in `src/assets/fonts/`; no network request is
+made at runtime. Keyboard hints use the platform's monospace stack.
 
 ## 4. License policy
 

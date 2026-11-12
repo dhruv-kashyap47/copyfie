@@ -12,7 +12,7 @@
 
 <footer>
   {#if toast}
-    <span class="toast" role="status">{toast}</span>
+    <span class="toast glass-toast toast-in" role="status">{toast}</span>
   {:else}
     <span class="hints">
       <kbd>↑</kbd><kbd>↓</kbd> navigate
@@ -35,9 +35,9 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 7px 14px;
-    border-top: 1px solid var(--border);
-    font-size: 10.5px;
+    padding: 8px 14px;
+    border-top: 1px solid var(--well-border);
+    font-size: var(--font-size-xs);
     color: var(--fg-muted);
   }
 
@@ -55,15 +55,16 @@
 
   kbd {
     padding: 1px 4px;
-    border: 1px solid var(--border);
+    border: 1px solid var(--control-border);
     border-radius: 4px;
+    background: var(--control-bg);
+    color: var(--fg);
     font-family: var(--font-mono);
     font-size: 9.5px;
-    color: var(--fg);
   }
 
   .toast {
-    color: var(--accent);
+    padding: 3px 8px;
     font-weight: 600;
   }
 

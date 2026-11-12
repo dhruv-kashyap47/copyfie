@@ -1,4 +1,5 @@
 @import "./tokens.css";
+@import "./glass.css";
 
 *,
 *::before,
@@ -14,19 +15,24 @@ body,
 
 html {
   color-scheme: dark light;
+  background: transparent;
 }
 
 body {
   margin: 0;
-  background: var(--bg);
+  background: transparent;
   color: var(--fg);
   font-family: var(--font-ui);
-  font-size: 14px;
+  font-size: var(--font-size-md);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow: hidden;
   user-select: none;
   cursor: default;
+}
+
+#app {
+  padding: 8px;
 }
 
 button,
@@ -36,7 +42,7 @@ input {
 }
 
 :focus-visible {
-  outline: 2px solid var(--accent);
+  outline: 2px solid var(--focus);
   outline-offset: 2px;
 }
 

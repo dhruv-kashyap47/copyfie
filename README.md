@@ -9,7 +9,8 @@ A fast, local-first clipboard manager for Windows, macOS, and Linux (X11).
 
 Milestone 1 (MVP) — text capture, hotkey palette, search, and paste.
 The current tree is the scaffold: Tauri shell, `copyfie-core` crate, CI, and
-attribution files.
+attribution files. The palette and settings now use a CSS-only Liquid Glass
+refresh (see `docs/DESIGN.md`).
 
 ## Development
 
@@ -51,8 +52,9 @@ lands in M1-09; this is intentional pre-warm behaviour, not a failed launch.
 
 Open with `Cmd/Ctrl+,`, the tray, or **Tray → Settings…**.
 
-- **Appearance:** theme (System / Light / Dark) and accent color, applied live to
-  both windows and cached for instant paint.
+- **Appearance:** theme (System / Light / Dark), applied live to both windows and
+  cached for instant paint. The accent is curated per theme — champagne in dark,
+  cobalt in light — so controls keep a consistent, legible look.
 - **Palette:** **Keep palette ready** — `Auto` (hybrid, default), `Always`, or
   `Never`; and for Auto, **Forget after** 5 / 10 / 30 minutes. Auto keeps the
   palette fast while you work and releases its ~340 MB WebView2 footprint after

@@ -1,6 +1,7 @@
 <script lang="ts">
   import type { ItemSummary } from "../lib/types";
   import { formatBytes, relativeTime, sourceColor, sourceInitial } from "../lib/format";
+  import { icons } from "../lib/icons";
 
   let {
     item,
@@ -27,6 +28,9 @@
         ? "Files"
         : "Text",
   );
+  const kindIcon = $derived(
+    item.kind === "image" ? icons.image : item.kind === "files" ? icons.files : icons.text,
+  );
 </script>
 
 <div
@@ -46,21 +50,17 @@
   }}
 >
   <span class="kind" data-kind={item.kind}>
-    {#if item.kind === "image"}
-      <svg viewBox="0 0 20 20" aria-hidden="true">
-        <rect x="3" y="4" width="14" height="12" rx="2" fill="none" stroke="currentColor" stroke-width="1.5" />
-        <circle cx="7.5" cy="8.5" r="1.3" fill="currentColor" />
-        <path d="m4 15 4.5-4 3 2.5L15 9l2 2.5" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-      </svg>
-    {:else if item.kind === "files"}
-      <svg viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M3 6.5A1.5 1.5 0 0 1 4.5 5h3l1.5 2h6.5A1.5 1.5 0 0 1 17 8.5v6A1.5 1.5 0 0 1 15.5 16h-11A1.5 1.5 0 0 1 3 14.5Z" fill="none" stroke="currentColor" stroke-width="1.5" stroke-linejoin="round" />
-      </svg>
-    {:else}
-      <svg viewBox="0 0 20 20" aria-hidden="true">
-        <path d="M5 5h10M5 9h10M5 13h7" fill="none" stroke="currentColor" stroke-width="1.6" stroke-linecap="round" />
-      </svg>
-    {/if}
+    <svg
+      viewBox="0 0 24 24"
+      fill="none"
+      stroke="currentColor"
+      stroke-width="2"
+      stroke-linecap="round"
+      stroke-linejoin="round"
+      aria-hidden="true"
+    >
+      {@html kindIcon}
+    </svg>
   </span>
 
   <div class="body">
@@ -75,9 +75,18 @@
       <span class="dot">·</span>
       <span>{detail}</span>
       {#if item.isPinned}
-        <svg class="pin" viewBox="0 0 20 20" aria-label="Pinned">
-          <path d="M12.8 3.2a1 1 0 0 1 1.4 1.4l-1.1 1.1 2 2-4.2 4.2-2.8.8.8-2.8 4.2-4.2-2-2Z" fill="currentColor" />
-          <path d="m8.6 11.4-3.5 3.5" stroke="currentColor" stroke-width="1.5" stroke-linecap="round" />
+        <svg
+          class="pin"
+          viewBox="0 0 24 24"
+          fill="none"
+          stroke="currentColor"
+          stroke-width="2"
+          stroke-linecap="round"
+          stroke-linejoin="round"
+          role="img"
+          aria-label="Pinned"
+        >
+          {@html icons.pin}
         </svg>
       {/if}
     </div>
@@ -94,13 +103,27 @@
     align-items: center;
     gap: 10px;
     min-height: var(--row-height);
-    padding: 6px 10px;
-    border-radius: 8px;
+    padding: 7px 10px;
+    border-radius: var(--radius-row);
+    box-shadow: inset 0 0 0 1px transparent;
     cursor: default;
+    position: relative;
   }
 
   .row.selected {
     background: var(--row-selected);
+    box-shadow: inset 0 0 0 1px var(--row-selected-border);
+  }
+
+  .row.selected::before {
+    content: "";
+    position: absolute;
+    left: 0;
+    top: 9px;
+    bottom: 9px;
+    width: 3px;
+    border-radius: 0 3px 3px 0;
+    background: var(--selected-bar);
   }
 
   .row:hover:not(.selected) {
@@ -113,22 +136,27 @@
     width: 28px;
     height: 28px;
     flex: none;
-    border-radius: 7px;
-    background: var(--bg);
-    color: var(--fg-muted);
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-sm);
+    background: var(--control-bg);
+    color: var(--fg-subtle);
+  }
+
+  .kind[data-kind="text"] {
+    color: var(--kind-text);
   }
 
   .kind[data-kind="image"] {
-    color: #8fb8ff;
+    color: var(--kind-image);
   }
 
   .kind[data-kind="files"] {
-    color: #ffcf8f;
+    color: var(--kind-files);
   }
 
   .kind svg {
-    width: 17px;
-    height: 17px;
+    width: 16px;
+    height: 16px;
   }
 
   .body {
@@ -138,7 +166,7 @@
 
   .preview {
     margin: 0;
-    font-size: 13px;
+    font-size: var(--font-size-md);
     line-height: 1.4;
     color: var(--fg);
     white-space: pre-line;
@@ -155,15 +183,15 @@
     align-items: center;
     gap: 5px;
     margin-top: 2px;
-    font-size: 10.5px;
+    font-size: var(--font-size-xs);
     color: var(--fg-muted);
   }
 
   .avatar {
     display: inline-grid;
     place-items: center;
-    width: 13px;
-    height: 13px;
+    width: 14px;
+    height: 14px;
     border-radius: 50%;
     color: #121019;
     font-size: 8px;
@@ -191,11 +219,12 @@
     flex: none;
     display: grid;
     place-items: center;
-    min-width: 18px;
-    height: 18px;
-    padding: 0 3px;
-    border: 1px solid var(--border);
-    border-radius: 4px;
+    min-width: 20px;
+    height: 20px;
+    padding: 0 4px;
+    border: 1px solid var(--control-border);
+    border-radius: 5px;
+    background: var(--control-bg);
     color: var(--fg-muted);
     font-family: var(--font-mono);
     font-size: 10px;

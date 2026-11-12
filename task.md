@@ -113,14 +113,10 @@ Effort: **S** ≈ 1–3 days · **M** ≈ 1–1.5 weeks · **L** ≈ 2–3 weeks
 > The user requested this refresh explicitly. It does not change the v1.0 task order;
 > it may run before M2 work. Each task follows the normal commit/push rule.
 
-- [ ] MR-01 Study references, write `docs/DESIGN.md`, tokens/tier/a11y plan (S) — deps: none — status: in-progress
-- [ ] MR-02 Tokens + `glass.css` + `GlassPanel/Button/Segmented/Input/Toast` (M) — deps: MR-01 — status: todo
-- [ ] MR-03 Palette redesign: shell, search, rows/selection, filters, footer, toast (M) — deps: MR-02 — status: todo
-- [ ] MR-04 Settings redesign + Reduce transparency (Auto/On/Off) + Visual effects (Auto/Full/Lite) (M) — deps: MR-02, MR-03 — status: todo
-- [ ] MR-05 Tier 2 native material: Windows Acrylic/Mica, macOS Liquid Glass/vibrancy, Linux fallback (M) — deps: MR-03 — status: todo
-- [ ] MR-06 Tier 3 WebView2 refraction with runtime gate, default-off switch (M) — deps: MR-05 — status: todo
-- [ ] MR-07 Accessibility audit, contrast script, light/dark + bright/dark screenshots (S) — deps: MR-03, MR-04 — status: todo
-- [ ] MR-08 Perf before/after, lite mode, docs/PERF.md + progress (S) — deps: MR-05, MR-06, MR-07 — status: todo
+- [x] MR-01 Study references, simplify to CSS-only, rewrite `docs/DESIGN.md` (S) — deps: none — status: done
+- [x] MR-02 Tokens + `glass.css` + palette shell/well/search/filters/rows/footer/toast (M) — deps: MR-01 — status: done
+- [x] MR-03 Settings solid refresh, Geist/Lucide, reduced-transparency/contrast/motion CSS (M) — deps: MR-02 — status: done
+- [x] MR-04 Bright/dark screenshots, Windows before/after perf, docs + progress (S) — deps: MR-02, MR-03 — status: done
 
 ---
 

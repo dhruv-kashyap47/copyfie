@@ -38,11 +38,11 @@
     <div class="state">
       <p class="title">Could not load history</p>
       <p class="detail">{errorMessage ?? "The store did not respond."}</p>
-      <button type="button" onclick={onRetry}>Try again</button>
+      <button type="button" class="glass-control pressable" onclick={onRetry}>Try again</button>
     </div>
   {:else if status === "loading"}
     {#each Array(6) as _, index (index)}
-      <div class="skeleton" style={`width:${68 + ((index * 17) % 26)}%`}></div>
+      <div class="skeleton skeleton-pulse" style={`width:${68 + ((index * 17) % 26)}%`}></div>
     {/each}
   {:else if items.length === 0}
     <div class="state">
@@ -73,10 +73,23 @@
     flex: 1;
     min-height: 0;
     overflow-y: auto;
-    padding: 4px 8px 8px;
+    padding: 2px 8px 8px;
     display: flex;
     flex-direction: column;
     gap: 2px;
+    scrollbar-width: thin;
+    scrollbar-color: var(--control-border) transparent;
+  }
+
+  .list::-webkit-scrollbar {
+    width: 10px;
+  }
+
+  .list::-webkit-scrollbar-thumb {
+    background: var(--control-border);
+    border: 3px solid transparent;
+    border-radius: 999px;
+    background-clip: content-box;
   }
 
   .state {
@@ -87,13 +100,13 @@
 
   .title {
     margin: 0;
-    font-size: 13px;
+    font-size: var(--font-size-md);
     font-weight: 600;
   }
 
   .detail {
     margin: 6px 0 0;
-    font-size: 12px;
+    font-size: var(--font-size-sm);
     color: var(--fg-muted);
     line-height: 1.5;
   }
@@ -101,33 +114,15 @@
   .state button {
     margin-top: 12px;
     padding: 6px 12px;
-    border: 1px solid var(--border);
-    border-radius: 7px;
-    background: var(--bg-elevated);
-    color: var(--fg);
-    font-size: 12px;
+    font-size: var(--font-size-sm);
     cursor: pointer;
   }
 
-  .state button:hover {
-    background: var(--row-hover);
-  }
-
   .skeleton {
-    height: 40px;
-    margin: 4px 10px;
-    border-radius: 8px;
-    background: linear-gradient(90deg, var(--bg-elevated), var(--row-hover), var(--bg-elevated));
-    background-size: 200% 100%;
-    animation: shimmer 1.2s ease-in-out infinite;
-  }
-
-  @keyframes shimmer {
-    from {
-      background-position: 200% 0;
-    }
-    to {
-      background-position: -200% 0;
-    }
+    height: 44px;
+    margin: 4px 2px;
+    border: 1px solid var(--control-border);
+    border-radius: var(--radius-row);
+    background: var(--control-bg);
   }
 </style>

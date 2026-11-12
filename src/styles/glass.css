@@ -1,0 +1,109 @@
+/* Copyfie glass-style primitives.
+ *
+ * The material is gradient + alpha + a 1 px light border + a bright top inset
+ * + layered soft shadows. No backdrop-filter: in a transparent window it can
+ * only sample the page, not the desktop, and with --disable-gpu it is a CPU
+ * cost with no visible gain.
+ *
+ * Technique credit: the layered highlight/shadow/tint idea is adapted from
+ * https://www.liquid-glass.pro/generator.html (no generated CSS is copied).
+ */
+
+.glass-shell {
+  position: relative;
+  border: var(--shell-border-width) solid var(--shell-border);
+  border-radius: var(--radius-shell);
+  background: linear-gradient(160deg, var(--shell-top), var(--shell-bottom));
+  box-shadow:
+    inset 0 1px 0 var(--shell-highlight),
+    inset 0 -1px 0 var(--shell-inner),
+    var(--shell-shadow);
+}
+
+.glass-well {
+  background: var(--well-bg);
+  border: var(--well-border-width) solid var(--well-border);
+  border-radius: var(--radius-well);
+  box-shadow: var(--well-shadow);
+}
+
+.glass-control {
+  background: var(--control-bg);
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: var(--radius-control);
+  color: var(--fg);
+}
+
+.glass-control:hover:not(:disabled) {
+  background: var(--control-hover);
+}
+
+.glass-inset {
+  background: var(--field-bg);
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: var(--radius-control);
+}
+
+.glass-track {
+  background: var(--track-bg);
+  border: var(--control-border-width) solid var(--control-border);
+  border-radius: var(--radius-control);
+}
+
+.glass-toast {
+  background: var(--toast-bg);
+  border: 1px solid var(--toast-border);
+  border-radius: var(--radius-sm);
+  color: var(--toast-fg);
+  box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.45);
+}
+
+.pressable {
+  transition: transform var(--dur-press) var(--ease);
+}
+
+.pressable:active:not(:disabled) {
+  transform: scale(0.98);
+}
+
+.toast-in {
+  animation: toast-in var(--dur-in) var(--ease) both;
+}
+
+.skeleton-pulse {
+  animation: skeleton-pulse 1.4s ease-in-out infinite;
+}
+
+@keyframes toast-in {
+  from {
+    opacity: 0;
+    transform: translateY(4px);
+  }
+  to {
+    opacity: 1;
+    transform: translateY(0);
+  }
+}
+
+@keyframes skeleton-pulse {
+  0%,
+  100% {
+    opacity: 0.55;
+  }
+  50% {
+    opacity: 0.85;
+  }
+}
+
+@media (prefers-reduced-motion: reduce) {
+  .toast-in,
+  .skeleton-pulse {
+    animation: none;
+  }
+
+  .pressable,
+  .pressable:active:not(:disabled) {
+    transition: none;
+    transform: none;
+  }
+}

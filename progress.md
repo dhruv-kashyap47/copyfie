@@ -797,3 +797,111 @@ redesign tasks, and write `docs/DESIGN.md` **before any UI code**. Stopped for a
 ### Next up
 
 - **Stop and show `docs/DESIGN.md` for approval.** Do not start MR-02 until approved.
+
+---
+
+## 2026-11-12 — Session 16 (MR-02…MR-04: simplified Liquid Glass UI)
+
+**Scope:** implement the approved CSS-only refresh: one glass-style shell, one solid well,
+curated light/dark accents, self-hosted Geist type, palette + settings restyle, screenshots,
+and Windows before/after measurements. No native materials, no SVG refraction, no new
+settings, no `Glass*` component library.
+
+### Done
+
+- **Design doc:** rewrote `docs/DESIGN.md` to the simplified direction and added the curated
+  accent pair and Geist type. Recorded the deliberate cuts.
+- **Tokens:** `src/styles/tokens.css` now owns the graphite/platinum palette, champagne dark
+  accent (`#D8B36A`), cobalt light accent (`#1E5BD7`), concentric radii, layered shadows,
+  mark colours, and reduced-transparency / increased-contrast overrides. No `backdrop-filter`
+  anywhere.
+- **Glass primitives:** `src/styles/glass.css` contains `.glass-shell`, `.glass-well`,
+  `.glass-control`, `.glass-inset`, `.glass-track`, `.glass-toast`, press/shell/toast
+  animations, and reduced-motion removal. The shell is gradient + alpha + 1 px border +
+  bright top inset + two soft shadows.
+- **Palette:** restyled in place (no component library): shell/well split, inset search with
+  Lucide search/x icons, segmented filter track, 52 px rows, selected row = theme tint +
+  1 px border + 3 px left bar, solid footer with kbd hints, solid toast, solid conflict card.
+- **Settings:** solid document surface; grouped cards; single segmented theme control; no
+  glass body. The accent picker was removed in favour of curated per-theme accents; the stored
+  `accent` field remains for settings-file compatibility and is not applied to the UI.
+- **Type:** self-hosted **Geist Sans** variable WOFF2 (SIL OFL 1.1, 58.5 KB). Keycap hints
+  use the platform monospace stack, so there is no second download. System stack remains
+  fallback. Font preloads were removed after they pushed cold open to 405 ms; the local font
+  loads after first paint with `font-display: swap`.
+- **Icons:** copied only the Lucide paths used (`src/lib/icons.ts`), added ISC/Feather-MIT
+  attribution and `third_party/licenses/lucide-ISC.txt`.
+- **Window:** palette is now `transparent(true)` with `no_redirection_bitmap(true)` on Windows;
+  the CSS shell supplies the rounded corners/shadow. Settings remains solid and native.
+- **Evidence:** added `docs/design/` screenshots + wallpaper plates + capture method, and
+  `scripts/design/capture.ps1` / `wallpaper_window.ps1`.
+- **Perf script:** added `scripts/perf/cpu_idle.ps1` for process-tree idle CPU.
+
+### Decisions
+
+- **No blur at all.** A transparent Tauri window cannot blur the desktop with CSS, and
+  `--disable-gpu` would burn CPU for nothing. The material is gradient + alpha + border +
+  highlight + shadow.
+- **One shell, one well.** All text sits on the 94–96 % well; no text on the translucent rim.
+- **Curated accents, not a picker.** Champagne in dark, cobalt in light. The stored accent
+  field remains only for settings-file compatibility; no UI accent is read anymore.
+- **Geist Sans over system fonts** for the premium look; the variable font is 58.5 KB.
+- **No font preloads.** They cost ~15 ms on the cold path; `swap` is enough for the local font.
+- **No shell entrance animation and no second font.** Both were trimmed after cold p95 reached
+  405–407 ms; the palette now appears immediately and only Geist Sans is bundled.
+- **No native/refraction tiers, no lite-mode detection, no glass CI script, no Glass\***
+  components, as requested.
+
+### Verification
+
+- `npm run check` → 0 errors / 0 warnings.
+- `npm test` → **33 passed**.
+- `npm run build` → JS+CSS **35.6 KB gzipped** (50 KB budget); `npm run size:check` passes.
+  Geist Sans adds 58.5 KB of static assets, not counted in the JS/CSS budget.
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`,
+  `cargo test --workspace` → clean; **111 tests** (47 app + 35 core unit + 18 store + 4 common +
+  3 Linux + 4 Windows).
+- **Contrast audit** (effective well over white and black wallpapers): body/muted text
+  **≥ 5.0:1** (dark 10.6–12.1, light 6.9–7.6); subtle text **≥ 5.0:1**; control borders
+  **≥ 3.2:1**; selected border **≥ 3.0:1**; selected bar **≥ 4.45:1**; focus **≥ 5.4:1**.
+- **Media queries** tested in a real Chromium engine via Playwright/CDP:
+  - `prefers-reduced-transparency: reduce` → solid shell/well in both themes.
+  - `prefers-contrast: more` → pure black/white, 2 px borders, no shadows.
+  - `prefers-reduced-motion: reduce` → animations/transitions removed.
+- **Screenshots:** six real-window captures at `docs/design/` (palette × light/dark ×
+  bright/dark wallpaper; settings light/dark) over reproducible wallpaper plates.
+
+### Measurements (Windows release, 10,004 items)
+
+| Metric | Before | After |
+|---|---:|---:|
+| Warm-open p95 | 37 ms | **47 ms** (20 samples; second 43-sample pass: **36 ms**) |
+| Cold-open p95 | 389 ms | **394 ms** (10 samples; second 10-run pass: **395 ms**) |
+| Warm total RSS | 345.4 MB avg / 351.6 MB max | **345.8 MB avg / 353.9 MB max** |
+| Idle CPU, hidden | 0.15 % of one core | **0.08 %** |
+| Idle CPU, visible | 0.39 % of one core | **0.64 %** |
+
+The first after-cold pass was **405 ms** with two font preloads. Removing the preloads brought
+it near 390 ms, but later runs could cross 400 ms; dropping Geist Mono (keycaps now use the
+platform monospace stack) and removing the shell fade gave final 10-run cold p95 of **394** and
+**395 ms**. Warm RSS is effectively unchanged (+0.4 MB avg) and idle CPU stays below 1 % of one
+core. Full notes in `docs/PERF.md`.
+
+### Unverified / caveats
+
+- **macOS and Linux:** not measured or visually verified here. The CSS is platform-neutral and
+  the window is transparent, but compositor transparency, native titlebar appearance, font
+  smoothing and DWM/GTK shadows must be checked on those OSes.
+- **Windows native shadow:** the release build shows the CSS shell shadow; DWM rounding/shadow
+  behaviour with `transparent(true)` + `no_redirection_bitmap(true)` should be re-checked on
+  Windows 10 and on mixed-DPI monitors.
+- **Font rendering:** Geist is bundled, but anti-aliasing/hinting differs by OS.
+- **Screenshots** use a deterministic full-screen wallpaper plate behind the transparent
+  window, not the user's actual desktop; the app window itself is the real release build.
+- The **accent picker is intentionally removed**; the stored `accent` is now legacy. If custom
+  accents return, they should become a per-theme pair rather than a single value.
+- The settings screenshot still shows the native Windows titlebar; that is intentional.
+
+### Next up
+
+- **Stop here per instruction.** Nothing further started.

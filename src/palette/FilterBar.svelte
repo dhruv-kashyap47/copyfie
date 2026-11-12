@@ -10,13 +10,14 @@
   } = $props();
 </script>
 
-<div class="filters" role="tablist" aria-label="Filter by content type">
+<div class="filters glass-track" role="tablist" aria-label="Filter by content type">
   {#each FILTERS as chip (chip)}
     <button
       type="button"
       role="tab"
       aria-selected={filter === chip}
       class:active={filter === chip}
+      class="pressable"
       onclick={() => onSelect(chip)}
     >
       {filterLabel(chip)}
@@ -27,29 +28,31 @@
 <style>
   .filters {
     display: flex;
-    gap: 6px;
-    padding: 0 16px 10px;
+    gap: 2px;
+    margin: 0 14px 8px;
+    padding: 3px;
   }
 
   button {
-    padding: 3px 10px;
-    border: 1px solid transparent;
-    border-radius: 999px;
+    flex: 1;
+    padding: 5px 8px;
+    border: none;
+    border-radius: 7px;
     background: transparent;
     color: var(--fg-muted);
-    font-size: 11.5px;
+    font-size: var(--font-size-xs);
     font-weight: 600;
     cursor: pointer;
   }
 
   button:hover {
-    background: var(--row-hover);
+    background: var(--control-hover);
     color: var(--fg);
   }
 
   button.active {
     background: var(--row-selected);
-    border-color: var(--border);
     color: var(--fg);
+    box-shadow: inset 0 0 0 1px var(--row-selected-border);
   }
 </style>

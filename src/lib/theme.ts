@@ -3,10 +3,14 @@
 // The palette and settings window apply the cached theme before mounting
 // (avoiding a flash), then reconcile with Rust. `system` removes `data-theme`
 // so the `prefers-color-scheme` media query in tokens.css applies.
+//
+// The visual accent is curated per theme in tokens.css (champagne in dark,
+// cobalt in light). The stored `accent` value remains only for settings-file
+// compatibility; it no longer overrides the theme accent.
 
 export type Theme = "system" | "light" | "dark";
 
-export const DEFAULT_ACCENT = "#9D86FF";
+export const DEFAULT_ACCENT = "#5B9DFF";
 
 const THEME_KEY = "copyfie.theme";
 const ACCENT_KEY = "copyfie.accent";
@@ -21,7 +25,7 @@ export function normalizeAccent(value: string): string {
   return /^[0-9a-fA-F]{6}$/.test(hex) ? `#${hex.toUpperCase()}` : DEFAULT_ACCENT;
 }
 
-export function applyTheme(theme: string, accent: string): void {
+export function applyTheme(theme: string, _accent: string): void {
   if (typeof document === "undefined") {
     return;
   }
@@ -34,8 +38,6 @@ export function applyTheme(theme: string, accent: string): void {
   } else {
     root.dataset.theme = normalized;
   }
-
-  root.style.setProperty("--accent", normalizeAccent(accent));
 }
 
 export function cacheTheme(theme: string, accent: string): void {

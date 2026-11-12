@@ -167,3 +167,35 @@ over 10 minutes (116 samples), ~168-180 MB private, and cold opens were
 **520 ms p95**. The fresh-profile control (354-363 MB) ruled out profile bloat.
 This is what triggered the hybrid decision.
 
+## Liquid Glass redesign (MR) — before/after
+
+Measured on the same Windows machine, release build, 10,004 items, after a
+20-open warm-up. The "before" run is the pre-redesign UI (`a6e6811`); the
+"after" run is the CSS-only Liquid Glass refresh. No `backdrop-filter`, one
+shell, one well, no animated blur.
+
+| Metric | Before | After | Change |
+|---|---:|---:|---:|
+| Warm-open p95 | **37 ms** | **47 ms** (20 samples; a second 43-sample pass measured **36 ms**) | +10 ms p95, still far under 100 ms |
+| Cold-open p95 | **389 ms** | **394 ms** (10 samples; a second 10-run pass measured **395 ms**) | +5 ms |
+| Warm total RSS | **345.4 MB avg / 351.6 MB max** | **345.8 MB avg / 353.9 MB max** | +0.4 MB avg (+0.1%) |
+| Idle CPU, palette hidden | **0.15%** of one core | **0.08%** | lower |
+| Idle CPU, palette visible | **0.39%** of one core | **0.64%** | +0.25 pp |
+
+Notes:
+
+- The first post-redesign cold pass hit **405 ms p95** with two font preloads in
+  the page. Removing the preloads brought it back to ~390 ms, but later runs
+  occasionally crossed 400 ms because Geist Mono and the shell entrance animation
+  still added work. Dropping Geist Mono (keycaps now use the platform monospace
+  stack) and removing the shell fade made the final two 10-run passes **394 /
+  395 ms p95**.
+- Geist Sans adds **58.5 KB** of static assets. It is not counted by the JS/CSS
+  gzip budget; the JS+CSS bundle is **35.6 KB gzipped** (50 KB budget). Keycap
+  hints use the platform monospace stack, so there is no second font.
+- The +0.25 percentage points of one core while visible is not material: absolute
+  idle CPU remains below 1% of one core, and warm memory is essentially unchanged
+  and far inside the <400 MB budget.
+- No shadow/gradient simplification was needed after the cold-path trims. Tier 2
+  native materials and SVG refraction were cut by design.
+
