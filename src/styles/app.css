@@ -21,9 +21,9 @@ html {
 body {
   margin: 0;
   background: transparent;
-  color: var(--fg);
+  color: var(--text);
   font-family: var(--font-ui);
-  font-size: var(--font-size-md);
+  font-size: var(--font-size-body);
   -webkit-font-smoothing: antialiased;
   text-rendering: optimizeLegibility;
   overflow: hidden;
@@ -32,7 +32,7 @@ body {
 }
 
 #app {
-  padding: 8px;
+  padding: 24px;
 }
 
 button,
@@ -42,7 +42,7 @@ input {
 }
 
 :focus-visible {
-  outline: 2px solid var(--focus);
+  outline: 2px solid var(--focus-ring);
   outline-offset: 2px;
 }
 

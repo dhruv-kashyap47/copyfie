@@ -1,61 +1,53 @@
-/* Copyfie glass-style primitives.
+/* Copyfie quiet surfaces.
  *
- * The material is gradient + alpha + a 1 px light border + a bright top inset
- * + layered soft shadows. No backdrop-filter: in a transparent window it can
- * only sample the page, not the desktop, and with --disable-gpu it is a CPU
- * cost with no visible gain.
- *
- * Technique credit: the layered highlight/shadow/tint idea is adapted from
- * https://www.liquid-glass.pro/generator.html (no generated CSS is copied).
+ * Flat colour, one hairline edge, one soft shadow. No gradients, no inner
+ * rings, no glow, no backdrop-filter. The window itself is transparent; only
+ * the rounded shell should be visible.
  */
 
 .glass-shell {
   position: relative;
-  border: var(--shell-border-width) solid var(--shell-border);
+  overflow: hidden;
+  border: var(--shell-border-width) solid var(--edge);
   border-radius: var(--radius-shell);
-  background: linear-gradient(160deg, var(--shell-top), var(--shell-bottom));
-  box-shadow:
-    inset 0 1px 0 var(--shell-highlight),
-    inset 0 -1px 0 var(--shell-inner),
-    var(--shell-shadow);
+  background: var(--surface);
+  box-shadow: var(--shadow-shell);
 }
 
 .glass-well {
-  background: var(--well-bg);
-  border: var(--well-border-width) solid var(--well-border);
+  background: var(--surface);
   border-radius: var(--radius-well);
-  box-shadow: var(--well-shadow);
 }
 
 .glass-control {
-  background: var(--control-bg);
-  border: var(--control-border-width) solid var(--control-border);
-  border-radius: var(--radius-control);
-  color: var(--fg);
+  background: var(--surface-2);
+  border: none;
+  border-radius: var(--radius-row);
+  color: var(--text);
 }
 
 .glass-control:hover:not(:disabled) {
-  background: var(--control-hover);
+  background: var(--row-hover);
 }
 
 .glass-inset {
-  background: var(--field-bg);
-  border: var(--control-border-width) solid var(--control-border);
-  border-radius: var(--radius-control);
+  background: var(--surface-2);
+  border: none;
+  border-radius: var(--radius-search);
 }
 
 .glass-track {
-  background: var(--track-bg);
-  border: var(--control-border-width) solid var(--control-border);
-  border-radius: var(--radius-control);
+  background: var(--seg-bg);
+  border: none;
+  border-radius: var(--radius-row);
 }
 
 .glass-toast {
   background: var(--toast-bg);
   border: 1px solid var(--toast-border);
-  border-radius: var(--radius-sm);
-  color: var(--toast-fg);
-  box-shadow: 0 4px 12px -6px rgba(0, 0, 0, 0.45);
+  border-radius: var(--radius-dialog);
+  color: var(--toast-text);
+  box-shadow: var(--shadow-toast);
 }
 
 .pressable {
@@ -67,7 +59,7 @@
 }
 
 .toast-in {
-  animation: toast-in var(--dur-in) var(--ease) both;
+  animation: toast-in var(--dur-state) var(--ease) both;
 }
 
 .skeleton-pulse {
@@ -91,7 +83,7 @@
     opacity: 0.55;
   }
   50% {
-    opacity: 0.85;
+    opacity: 0.8;
   }
 }
 

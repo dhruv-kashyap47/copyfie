@@ -340,7 +340,7 @@ impl PaletteManager {
             .store
             .call_blocking(|db| {
                 db.list(&ListQuery {
-                    limit: 50,
+                    limit: 20,
                     ..ListQuery::default()
                 })
             })
@@ -374,7 +374,9 @@ impl PaletteManager {
             .skip_taskbar(true)
             .visible(false)
             .focused(false)
-            .shadow(true)
+            // The window is a transparent rectangle larger than the CSS shell;
+            // any native frame/shadow would draw a second, square outline.
+            .shadow(false)
             .theme(window_theme)
             .initialization_script(&script);
 
@@ -386,12 +388,55 @@ impl PaletteManager {
             .no_redirection_bitmap(true)
             .additional_browser_args(BROWSER_ARGS);
 
-        builder.build().map_err(|error| {
+        let window = builder.build().map_err(|error| {
             log::error!(target: "copyfie::palette", "could not create the palette window: {error}");
             error.to_string()
-        })
+        })?;
+
+        apply_windows_frame(&window);
+        Ok(window)
     }
 }
+
+/// Remove the Windows 11 DWM border and native corner rounding from the
+/// palette. The window is intentionally larger than the CSS shell; only the
+/// CSS shell (radius 14) should be visible.
+#[cfg(target_os = "windows")]
+fn apply_windows_frame(window: &WebviewWindow) {
+    use windows_sys::Win32::Graphics::Dwm::{
+        DwmSetWindowAttribute, DWMWA_BORDER_COLOR, DWMWA_COLOR_NONE,
+        DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND,
+    };
+
+    let Ok(handle) = window.hwnd() else {
+        return;
+    };
+    let hwnd = handle.0 as isize as *mut core::ffi::c_void;
+
+    // SAFETY: the HWND belongs to this window and the attribute values live for
+    // the duration of each call. Unsupported Windows 10 builds return an error,
+    // which is safe to ignore.
+    unsafe {
+        let border: u32 = DWMWA_COLOR_NONE;
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_BORDER_COLOR as u32,
+            &border as *const _ as *const core::ffi::c_void,
+            std::mem::size_of::<u32>() as u32,
+        );
+
+        let corner: i32 = DWMWCP_DONOTROUND;
+        let _ = DwmSetWindowAttribute(
+            hwnd,
+            DWMWA_WINDOW_CORNER_PREFERENCE as u32,
+            &corner as *const _ as *const core::ffi::c_void,
+            std::mem::size_of::<i32>() as u32,
+        );
+    }
+}
+
+#[cfg(not(target_os = "windows"))]
+fn apply_windows_frame(_window: &WebviewWindow) {}
 
 impl Default for PaletteManager {
     fn default() -> Self {
