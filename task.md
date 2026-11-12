@@ -29,7 +29,7 @@ Effort: **S** ≈ 1–3 days · **M** ≈ 1–1.5 weeks · **L** ≈ 2–3 weeks
 - [x] M1-08 Paste orchestrator: hide, restore focus, write, suppress echo, synthesize paste (L) — deps: M1-05, M1-07 — status: done
 - [x] M1-09 Hotkey + first-run conflict detection + rebind + tray + single instance + autostart (M) — deps: M1-07 — status: done
 - [x] M1-10 Minimal settings + theme (M) — deps: M1-06 — status: done
-- [ ] M1-11 Perf harness, 10k fixture, baseline report (M) — deps: M1-02 — status: todo
+- [x] M1-11 Perf harness, 10k fixture, baseline report (M) — deps: M1-02 — status: done
 - [ ] M1-12 Measure real RSS per OS (core + total process tree, 10k items, 10 min idle), record in `docs/perf/` (M) — deps: M1-11 — status: todo
 - [ ] M1-13 MVP acceptance pass + docs (M) — deps: M1-01..M1-12 — status: todo
 

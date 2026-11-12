@@ -1,0 +1,55 @@
+{
+  "arch": "x86_64",
+  "db_bytes": 8421376,
+  "dedupe": {
+    "max_ms": 554.875,
+    "p50_ms": 0.381,
+    "p95_ms": 1.739,
+    "total_ms": 11466.696
+  },
+  "fts_common": {
+    "max_ms": 64.186,
+    "p50_ms": 41.038,
+    "p95_ms": 46.813,
+    "total_ms": 8357.393
+  },
+  "fts_kind_text": {
+    "max_ms": 55.89,
+    "p50_ms": 43.922,
+    "p95_ms": 47.662,
+    "total_ms": 8855.381
+  },
+  "fts_no_match": {
+    "max_ms": 0.332,
+    "p50_ms": 0.181,
+    "p95_ms": 0.205,
+    "total_ms": 37.301
+  },
+  "fts_rare": {
+    "max_ms": 1.15,
+    "p50_ms": 0.294,
+    "p95_ms": 0.489,
+    "total_ms": 67.219
+  },
+  "insert": {
+    "max_ms": 30.606,
+    "p50_ms": 0.457,
+    "p95_ms": 0.902,
+    "total_ms": 5273.371
+  },
+  "items": 10000,
+  "list_recent_100": {
+    "max_ms": 1.334,
+    "p50_ms": 0.294,
+    "p95_ms": 0.33,
+    "total_ms": 61.17
+  },
+  "notes": "text-only history; 30-day retention; bundled SQLite + FTS5",
+  "os": "windows",
+  "queries": 200,
+  "retention_cleanup": {
+    "removed": 0,
+    "total_ms": 4.765
+  },
+  "version": "0.1.0"
+}

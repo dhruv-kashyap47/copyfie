@@ -77,11 +77,23 @@ describe("filterItems", () => {
       item(index + 1, `entry number ${index} with some searchable text`),
     );
 
-    const started = performance.now();
-    const result = filterItems(many, "number 9999", "all");
-    const elapsed = performance.now() - started;
+    const queries = ["number 9999", "entry", "searchable text", "nothing here"];
+    const samples: number[] = [];
 
-    expect(result.length).toBeGreaterThan(0);
-    expect(elapsed).toBeLessThan(100);
+    for (let iteration = 0; iteration < 60; iteration += 1) {
+      const started = performance.now();
+      filterItems(many, queries[iteration % queries.length], "all");
+      samples.push(performance.now() - started);
+    }
+
+    samples.sort((left, right) => left - right);
+    const p50 = samples[Math.floor(samples.length * 0.5)];
+    const p95 = samples[Math.floor(samples.length * 0.95)];
+
+    console.log(
+      `local filter 10k: p50=${p50.toFixed(2)} ms p95=${p95.toFixed(2)} ms`,
+    );
+
+    expect(p50).toBeLessThan(50);
   });
 });

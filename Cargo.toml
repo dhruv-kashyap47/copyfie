@@ -27,3 +27,10 @@ strip = "symbols"
 # binary favors size.
 [profile.release.package.copyfie-core]
 opt-level = 3
+
+# Optimized, non-LTO profile for benchmarks and the perf harness. Keeps
+# iteration fast while matching the runtime optimization level.
+[profile.bench]
+inherits = "release"
+lto = false
+codegen-units = 16

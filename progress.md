@@ -548,3 +548,42 @@ PLAN §7 lists `Ctrl+P`/`Ctrl+N` as arrow alternatives and also `Cmd/Ctrl+P` as 
 ### Next up
 
 - **M1-11** — perf harness, 10k fixture, baseline report.
+
+---
+
+## 2026-11-12 — Session 12 (Milestone 1, M1-11)
+
+**Scope:** M1-11 — perf harness, 10k fixture, baseline report.
+
+### Done
+
+- **Harness (`crates/copyfie-core/examples/perf.rs`):** deterministic 10k text fixture and measurements for insert, dedupe/recopy, FTS (common/rare/no-match/kind-filtered), recent listing, retention cleanup, DB size, and p50/p95/max/total. Prints JSON and writes `--out`.
+- **`bench` profile:** opt-level 3 with LTO off, so measurements are optimized but iteration stays fast.
+- **Scripts:** `scripts/perf/seed_10k.ps1` (seeds the app DB; refuses while Copyfie runs) and `scripts/perf/rss.ps1` (process-tree RSS sampler for M1-12).
+- **Local filter benchmark:** the 10k vitest test now runs 60 queries and reports p50/p95 (`5.36 / 7.70 ms`) instead of a single assertion.
+- **Baseline:** `docs/perf/0.1.0-windows-x86_64.json` and the write-up in `docs/PERF.md`.
+
+### Baseline (10k items, Windows 11, Ryzen 5 5600H)
+
+| Operation | p50 | p95 |
+|---|---:|---:|
+| Insert | 0.46 ms | 0.90 ms |
+| Dedupe (recopy) | 0.38 ms | 1.74 ms |
+| FTS common (100 of 10k) | 41.0 ms | 46.8 ms |
+| FTS rare | 0.29 ms | 0.49 ms |
+| FTS no-match | 0.18 ms | 0.21 ms |
+| List recent 100 | 0.29 ms | 0.33 ms |
+| Local filter 10k | 5.36 ms | 7.70 ms |
+
+DB: 8.45 MB for 10,004 items (~840 B/item). Retention cleanup: 4.8 ms.
+
+### Observations / follow-ups
+
+- FTS ranked search is **close to the 50 ms p95 gate** when a query matches all 10k rows. The instant local layer (5.4 ms p50) is what keeps typing responsive; FTS remains the authoritative pass. If this regresses, consider a candidate cap before `bm25` or a recency pre-filter.
+- Dedupe total time is inflated because every recopy updates `source_app_name`, firing the FTS update trigger. Optimization: skip source updates when unchanged. Not a correctness issue.
+- One dedupe outlier (555 ms) from a WAL checkpoint; p50/p95 stable.
+- Measurements use the `bench` profile; the release binary may differ slightly. RSS uses the release build (M1-12).
+
+### Next up
+
+- **M1-12** — measure real RSS per OS (core + process tree, 10k items, 10 min idle) and record in `docs/perf/`.
