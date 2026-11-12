@@ -75,6 +75,10 @@ pub async fn paste_item(
         while std::time::Instant::now() < deadline && window.is_visible().unwrap_or(false) {
             std::thread::sleep(std::time::Duration::from_millis(10));
         }
+
+        if let Some(palette) = app.try_state::<crate::palette::PaletteManager>() {
+            palette.after_hide(&app);
+        }
     }
 
     let text = item.text.clone();

@@ -22,6 +22,8 @@ pub struct SettingsView {
     pub launch_at_login: bool,
     pub hotkey: String,
     pub hotkey_registered: bool,
+    pub palette_ready: String,
+    pub palette_idle_minutes: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -40,6 +42,8 @@ pub struct SettingsInput {
     pub capture_paused: bool,
     pub launch_at_login: bool,
     pub hotkey: String,
+    pub palette_ready: String,
+    pub palette_idle_minutes: u32,
 }
 
 #[derive(Debug, Clone, Serialize)]
@@ -70,6 +74,8 @@ fn view(app: &AppHandle, state: &AppState) -> SettingsView {
         launch_at_login: app.autolaunch().is_enabled().unwrap_or(false),
         hotkey: settings.hotkey,
         hotkey_registered: state.hotkey.is_registered(),
+        palette_ready: settings.palette_ready,
+        palette_idle_minutes: settings.palette_idle_minutes,
     }
 }
 
@@ -133,6 +139,8 @@ pub fn settings_save(
     settings.accent = input.accent;
     settings.retention_days = input.retention_days;
     settings.capture_paused = input.capture_paused;
+    settings.palette_ready = input.palette_ready;
+    settings.palette_idle_minutes = input.palette_idle_minutes;
 
     let settings = settings.sanitized();
     state.settings.save(&settings)?;
@@ -155,6 +163,10 @@ pub fn settings_save(
         let mut config = config.write().unwrap_or_else(|poison| poison.into_inner());
         config.retention = Retention::from_days(settings.retention_days);
         config.paused = settings.capture_paused;
+    }
+
+    if let Some(palette) = app.try_state::<crate::palette::PaletteManager>() {
+        palette.apply_settings(&app, &settings);
     }
 
     let window_theme = match settings.theme.as_str() {

@@ -23,7 +23,7 @@ I inspected both reference repos read-only in a temp directory (Ropy `0.6.2`, Or
 | **Source model** | **Closed-source commercial product. Private repo permanently.** | Proprietary `LICENSE` + EULA. MIT attribution for adapted Ropy/Ortu code retained from day one. |
 | **Sync** | **Not in v1.0.** Optional **v1.2**: E2E-encrypted sync through a user-chosen synced folder (iCloud/Dropbox/OneDrive). | No server, no relay, no managed sync backend. |
 | **History length** | User setting: **default 30 days**, options 7/30/90/365 days or **Forever**. | No plan-based history limits — **the trial length never truncates history**. Image cache cap 1 GB, user-adjustable. |
-| **RAM target** | Core process **< 40 MB**; total with webview expected **60–100 MB**. | Keep the pre-warmed palette. Measure real RSS per OS in Milestone 1. Decision gate if total **> 120 MB**. |
+| **RAM target** | **Per-OS gates measured in M1:** core **< 40 MB**; total process tree with the palette webview **destroyed < 60 MB**; total with the palette **warm** recorded and budgeted from the measurement (Windows: **342.8 MB avg / 345.5 MB max → budget < 400 MB**); **cold open p95 < 400 ms**; **warm open p95 < 100 ms**. | **Hybrid palette lifecycle:** pre-warmed while the user is active, webview destroyed after **10 idle minutes** (default `Auto`), with `Always` (never destroy) and `Never` (create on hotkey, destroy on close). Core capture continues with no webview. macOS and Linux must be measured on their own; do not assume the Windows numbers. |
 | **Default hotkey** | `CommandOrControl+Shift+Space`. | First-run conflict detection + simple rebind flow. `Ctrl+Shift+V` is plain-text paste; `Ctrl+Alt+V` is Paste Special in Office. |
 | **Quick paste `1–9`** | Bare digits only when the query is empty; `Cmd/Ctrl+1–9` always. | Applies to the 25 visible rows in limited mode. |
 | **`Shift+Enter`** | Text → plain text; files → newline-joined paths; images → normal paste + toast. | Defined fallback instead of a silent no-op. |
@@ -133,7 +133,7 @@ Legend: **Adopt** = copy with minor changes; **Adapt** = reuse structure/approac
 | Capture | `clipboard-rs`, event-driven Windows/X11, polling macOS/Wayland | `arboard`, 350 ms polling with full reads | **Ropy’s approach.** Event-driven where possible; read only after change. |
 | Dedup | Content hash + persistence acknowledgement | `raw_content` equality, bump timestamp | **Ropy’s approach**, with BLAKE3 and a proper unique index. |
 | Search | In-memory `memchr` literal search | FTS5 candidate set + fuzzy re-rank | **Hybrid**: FTS5 for ranked/full-text candidates, in-memory preview scan for instant substring/fuzzy. |
-| Popup lifetime | Resident/pre-warmed (except Wayland transient) | Lazily created on first hotkey | **Ropy’s approach** for the 100 ms target. Core RSS budget is 40 MB; total is tracked against the 120 MB gate. |
+| Popup lifetime | Resident/pre-warmed (except Wayland transient) | Lazily created on first hotkey | **Hybrid:** pre-warmed while active; destroyed after 10 idle minutes (`Auto`), or `Always` / `Never`. Warm open p95 target 100 ms, cold p95 400 ms. Core RSS budget < 40 MB; total warm budget is set from measured data (Windows < 400 MB). |
 | Default hotkey | `Ctrl+Shift+D` | `Alt+V` | **Adopt `CommandOrControl+Shift+Space`** (decided). Neither reference uses it. `Ctrl+Shift+V` is plain-text paste; `Ctrl+Alt+V` is Paste Special in Office. Add first-run conflict detection + rebind. |
 | macOS concealed items | Not implemented | Implemented and tested | **Ortu wins**; extend to Windows/Linux. |
 | Source app | Not tracked | Not tracked | **Neither covers it.** We add it; it is required for the blocklist and the UX. |
@@ -147,7 +147,7 @@ Legend: **Adopt** = copy with minor changes; **Adapt** = reuse structure/approac
 - **Ortu artifacts (v2.1.0):** NSIS 3.65 MB, MSI 4.99 MB, `.deb` 5.89 MB, universal DMG 9.82 MB, **AppImage 79.85 MB**.
 - **Ropy artifacts (0.6.2):** Linux x86_64 `tar.xz` 9.80 MB, Windows zip 9.08 MB, macOS DMG 8.20–9.21 MB; uncompressed Linux executable 37.37 MiB.
 - **Ropy 0.5.7 benchmark:** isolated hidden-window RSS 57.28 MiB; 10,000-record ASCII search ~1.08 ms after optimization.
-- These numbers are the basis for the size/RAM expectations in §8. They show that **core RSS < 40 MB is realistic**, that **total RSS with a pre-warmed webview is expected at 60–100 MB**, and that **AppImage cannot meet `< 10 MB`** (hence deferred).
+- These numbers were the basis for the original size/RAM expectations in §8. The **core < 40 MB** target proved realistic, but the **60-100 MB total with a pre-warmed WebView2** estimate did not: M1 measured ~343 MB warm on Windows (and ~30 MB with the webview destroyed). §8 now uses per-OS measured gates and a hybrid palette lifecycle. AppImage still cannot meet **`< 10 MB`** (hence deferred).
 
 ---
 
@@ -890,7 +890,7 @@ Entitlement is `trial`, `active`, or `locked`. Rust returns it with every `palet
 | Target | Mechanism | How measured | Realistic expectation |
 |---|---|---|---|
 | Installer < 10 MB | Tauri uses system WebView; `lto=fat`, `codegen-units=1`, `panic=abort`, `strip`, minimal features; no bundled fonts/icons | `scripts/bundle/verify_sizes.py` on release artifacts | v1.0: NSIS ~4–5.5 MB, deb/rpm ~6–7.5 MB, per-arch DMG ~6–8 MB. MSI/AppImage/Flatpak are v1.x; AppImage would be ~70–90 MB. |
-| Core RSS < 40 MB; total 60–100 MB | Bounded DB/cache/image budgets; pre-warmed palette retained | RSS/working set per process **and** total process tree; 10-min idle; M1 measurement | Core likely 20–35 MB; total with WebView2/WKWebView/WebKitGTK 60–100 MB. **Decision gate if total >120 MB.** |
+| Core RSS < 40 MB; total destroyed < 60 MB; total warm budgeted from measurement; cold p95 < 400 ms; warm p95 < 100 ms | Hybrid pre-warm + idle destroy; WebView2 flags (`--disable-gpu`, no crashpad, no background networking); bootstrap first paint | RSS/working set per process **and** total process tree; private bytes reported too; 10-min idle **and** warm samples; cold/warm open harness | Windows warm 337.6-345.5 MB working (106.7 MB private), destroyed 30.1 MB (7.4 MB private), cold p95 390 ms, warm p95 37 ms. macOS/Linux pending. |
 | Palette opens < 100 ms | Pre-created hidden window; cached first page; position before show; no DB read on open | Rust `Instant` at hotkey → frontend `performance.mark` at first rAF | 30–80 ms p95 when warm. Cold first open 250–700 ms. |
 | Search 10k+ instant | FTS5 + in-memory summary scan; 50-result cap; 30–60 ms debounce; stale request cancellation | Criterion bench + seeded 10k DB + UI timing | FTS5 <5 ms; local filter 1–3 ms; total <50 ms p95. |
 | Idle CPU ~0 | Event-driven Windows/X11; changeCount poll on macOS; MIME poll on Wayland (v1.x); no UI timers when hidden; no daily updater in v1.0 | 10-min sample; `Get-Counter` / `pidstat` | <0.1% average. |
@@ -921,19 +921,21 @@ Entitlement is `trial`, `active`, or `locked`. Rust returns it with every `palet
 
 ### RAM
 
-- **Budget:** core process private working set **< 40 MB**; total process tree **60–100 MB expected**, with a hard **decision gate at > 120 MB**.
+- **Per-OS gates:** core process **< 40 MB**; total process tree with the palette webview **destroyed < 60 MB**; total with the palette **warm** recorded per OS and the budget set from that number (Windows: 342.8 MB avg / 345.5 MB max → **< 400 MB**); cold open **p95 < 400 ms**; warm open **p95 < 100 ms**. Working-set sums double-count shared WebView2/WebKit pages; private bytes are recorded too.
+- **Hybrid lifecycle:** pre-warmed while active, destroyed after 10 idle minutes (`Auto`, default); `Always` keeps it warm, `Never` creates per hotkey and destroys on close. Capture continues with no webview.
 - Rust core: 20–35 MB target (DB cache 8 MB, summary cache 2–5 MB, image decode transient).
 - Summary cache cap: store first 256 chars per item, not full text, for 10k items (~3 MB). Full text stays in SQLite; FTS handles deep matches.
 - Image thumbnails: lazy, 256 px, WebView cache; never keep all thumbnails in Rust memory.
 - Decode full images only on paste; cache at most one decoded image (or zero).
-- Drop the settings window on close; only the palette webview is resident.
-- **Milestone 1 measurement task:** record per-process and total RSS on Windows, macOS, and Linux X11 after 10 minutes idle, with 10k seeded items and the palette pre-warmed. Store results in `docs/perf/`.
-- **Decision gate:** if total RSS exceeds 120 MB on any target, choose one before M1 exit: tighten caches, disable pre-warm for that OS, or formally raise the total budget. Do not silently ship a regression.
+- Drop the settings window on close; only the palette webview may be resident, and only while active (hybrid).
+- **Milestone 1 measurement task:** per OS, with 10k items, record: core working/private; total with the webview **warm** (10-minute idle in `Always`/pre-warmed) and **destroyed** (10 minutes after idle destroy); cold and warm open p95 (10–20 iterations). Store JSON in `docs/perf/`. Windows is measured; macOS and Linux are separate tasks.
+- **Decision gate:** a new OS must meet all per-OS gates before v1.0. If the warm total exceeds its recorded budget, tighten caches, adjust the hybrid timeout, or formally raise that OS's budget. Do not assume Windows numbers apply elsewhere.
 
 ### Open time
 
-- Pre-warm is mandatory.
-- Position before `show()`; do not move a visible window (Ortu’s fix).
+- Pre-warm is mandatory while active; the hybrid destroys the webview after the idle timeout.
+- Cold open (webview destroyed): bootstrap the top 50 summaries, theme, and accent into the page, show immediately, keep startup JS light. Target **p95 < 400 ms**; measured 390 ms on Windows.
+- Position before `show()`; do not move a visible window (Ortu's fix).
 - Render cached rows; do not await IPC in the open handler.
 - Avoid font loading, layout thrash, and image decoding on first paint.
 - Keep the palette DOM small: 50 rows max, fixed row height, CSS containment.
@@ -1111,7 +1113,7 @@ These are estimates; the CI size gate is the authority. v1.0 size gate covers on
 - Criterion: insert, dedupe, FTS, local scan, retention.
 - Seeded 10k/100k DB; report p50/p95.
 - Open-to-first-paint: 100 iterations per OS, report p50/p95.
-- RSS: 10-minute idle, process tree, per OS; compare core <40 MB, total 60–100 MB, gate >120 MB.
+- RSS: per OS, 10-minute warm and 10-minute destroyed samples, process tree, private + working set; compare core <40 MB, destroyed <60 MB, warm budget per the measured number, cold p95 <400 ms, warm p95 <100 ms.
 - Idle CPU: 10-minute sample.
 - Installer size: release artifacts.
 - Soak: 24 h with periodic copies, images, searches; track RSS slope and errors.
@@ -1373,7 +1375,7 @@ Effort: **S** ≈ 1–3 days, **M** ≈ 1–1.5 weeks, **L** ≈ 2–3 weeks for
 | 9 | Hotkey + first-run conflict detection + rebind flow + tray + single instance + autostart | M | Adapt Ortu/Ropy |
 | 10 | Minimal settings + theme | M | Rewrite |
 | 11 | Perf harness, 10k fixture, baseline report | M | Adapt Ropy benchmarks |
-| 12 | **Measure real RSS per OS** (core + total process tree, 10k items, 10 min idle) and record in `docs/perf/` | M | New |
+| 12 | **Measure per-OS RAM and open latency:** core + process tree, 10k items, 10 min warm and 10 min destroyed, cold/warm open p95; record in `docs/perf/` | M | New |
 | 13 | MVP acceptance pass + docs | M | — |
 
 **MVP acceptance criteria**
@@ -1386,7 +1388,7 @@ Effort: **S** ≈ 1–3 days, **M** ≈ 1–1.5 weeks, **L** ≈ 2–3 weeks for
 - Enter pastes into the app that was focused before opening; wrong-target paste never happens silently.
 - Copying an item back does not create a duplicate or bump the item.
 - Password-manager copy is not stored on macOS; Windows/Linux markers covered where available.
-- **Core process RSS < 40 MB; total process tree 60–100 MB.** If total > 120 MB, the M1 exit is blocked until the decision gate is resolved.
+- **RAM and open gates:** core process < 40 MB; total process tree with the palette webview destroyed < 60 MB; warm total within its measured per-OS budget (Windows < 400 MB; measured 342.8 MB avg / 345.5 MB max, 106.7 MB private); cold open p95 < 400 ms (measured 390 ms); warm open p95 < 100 ms (measured 37 ms). macOS and Linux must be measured separately.
 - No telemetry, no account, no background network, and no update checker in the MVP.
 - Release builds succeed on all three OSes; installer sizes recorded.
 
@@ -1446,7 +1448,7 @@ Effort: **S** ≈ 1–3 days, **M** ≈ 1–1.5 weeks, **L** ≈ 2–3 weeks for
 - **`winget install Copyfie.Copyfie` and `brew install --cask copyfie/tap/copyfie`** succeed and their uninstall counterparts work.
 - **Uninstall keeps history by default**; `--purge` removes history, `license/`, and `trial.json` after a warning; autostart and desktop entries are removed in both cases.
 - **Download page is live** with every artifact, its SHA-256, the signature, the size, and manual install/uninstall steps; published checksums match the release assets.
-- Idle CPU <0.1% over 10 minutes; 24 h soak with no crash and <10% RSS growth; core <40 MB, total 60–100 MB, gate at 120 MB.
+- Idle CPU <0.1% over 10 minutes; 24 h soak with no crash and <10% RSS growth; core <40 MB, total destroyed <60 MB, warm total within its per-OS budget, cold p95 <400 ms, warm p95 <100 ms.
 - No auto-updater in v1.0; the manual update link and release notes are correct.
 - Privacy doc states exactly what is stored, where, and what is never read; the trial/license files contain no clipboard content.
 - Proprietary `LICENSE`, EULA, and `THIRD_PARTY.md` are present in the installer and in About.
@@ -1741,7 +1743,7 @@ UI details are in §7 (“Limited mode”). The only post-trial prompt is one fo
 | Rank | Risk | Likelihood | Impact | Mitigation |
 |---|---|---|---|---|
 | 1 | **Limited mode feels punitive and kills conversion** | Medium | High | Show 25 real, useful items; one footer line; instant unlock; never delete data; measure trial→paid conversion. Keep 25 as the shipped behavior unless evidence strongly justifies a change. |
-| 2 | **Total RSS exceeds the 120 MB gate** | Medium | High | M1 measures per-OS core + total RSS. Gate blocks M1 exit >120 MB. Tighten caches, reduce pre-warm scope, or formally raise the budget. |
+| 2 | **Total RSS above the per-OS budget** | Medium | High | M1 measured Windows: 342.8 MB warm (budget <400 MB), 30.1 MB with the webview destroyed (gate <60 MB), core 30 MB. Hybrid lifecycle + WebView2 flags. macOS/Linux budgets are set from their own measurements; gate blocks v1.0 until each is recorded. Tighten caches, adjust the idle timeout, or formally raise that OS's budget. |
 | 3 | **macOS Accessibility/focus/paste reliability** | Medium | High | Explicit permission onboarding; deterministic target PID restore; `Key::Other(9)`; copy-only fallback; test installed/ad-hoc builds, not just dev. |
 | 4 | **Windows focus restore / elevated targets** | Medium | High | Poll active window; `AttachThreadInput` fallback; detect elevation; copy-only with toast; never paste blind. |
 | 5 | **Clipboard echo/dedupe races** | Medium | High | Suppression token + persistence acknowledgement + generation; integration tests for copy-after-delete/clear. |
@@ -1792,7 +1794,7 @@ All previously open questions are resolved in the **Decisions** table at the top
 | **Payout + accounting** | Before launch | Payout route chosen (wire or Payoneer), schedule and $100 minimum confirmed, fee/FX documented, FIRC handled, accountant has reviewed GST/export treatment. |
 | **Pricing validation** | Before launch | Competitor scan; confirm launch and list price; record in `docs/LICENSING.md`. |
 | **Trial + limited-mode acceptance** | v1.0 exit | Test 14-day trial start, anchors, clock rollback, day 10/13/14 reminders, 25-item view with real hidden count, locked settings, instant unlock, offline verification, reinstall, refund grace. |
-| **RAM gate** | Milestone 1 exit | Core <40 MB; total 60–100 MB expected. If total >120 MB, resolve before M1 exit. |
+| **RAM gate** | Milestone 1 exit | Per OS: core <40 MB; total with the palette webview destroyed <60 MB; warm total within the measured budget (Windows <400 MB); cold open p95 <400 ms; warm open p95 <100 ms. Windows measured; macOS/Linux gates must be recorded before v1.0. |
 | **Folder-sync threat model** | v1.2 | Review the no-server design, provider rollback, conflict handling, and key rotation before shipping. |
 | **Wayland/Flatpak/MSI/AppImage/auto-updater** | v1.x planning | Explicitly deferred from v1.0; do not let them creep into the v1.0 scope. |
 
@@ -1828,7 +1830,7 @@ Nothing blocks Milestone 1. The name (**Copyfie**), architecture, RAM target, ho
 
 1. **Proprietary `LICENSE` + EULA** — before any binary distribution.
 2. **Naming clearance + branding** — verify `copyfie.app`, trademark conflicts, and GitHub/winget/Homebrew/package handles; then lock `com.copyfie.app`, accent color, and copyright line before packaging/signing.
-3. **RAM gate** — at M1 exit: core <40 MB, total 60–100 MB; resolve if total >120 MB.
+3. **RAM gate** - at M1 exit: per OS, core <40 MB, destroyed <60 MB, warm total within its measured budget, cold p95 <400 ms, warm p95 <100 ms. Windows recorded; macOS/Linux pending.
 4. **Pricing validation** — before launch; competitor scan and final price.
 5. **Paddle seller approval + license backend** — before charging money: approved seller account, working webhook/key service, test purchase and refund.
 6. **Code signing** — before charging money, and before the one-line installers are advertised.

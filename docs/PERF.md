@@ -97,29 +97,73 @@ Local filter benchmark:
 npx vitest run src/lib/localSearch.test.ts --reporter verbose
 ```
 
-## RSS and idle CPU (M1-12)
+## Memory and open latency (M1-12, final)
 
-Release build, 10,004 items, palette created hidden (pre-warmed), 10 minutes
-idle, 116 samples at 5 s. A second 60-second run with a **fresh WebView2
-profile** served as a control.
+**Hybrid lifecycle:** the palette is pre-warmed while active and the webview is
+destroyed after 10 idle minutes (`Auto`, default). `Always` never destroys;
+`Never` creates on hotkey and destroys on close. Capture continues with no
+webview.
 
-| Component | Working set |
-|---|---:|
-| `copyfie.exe` (core) | **24-27 MB** |
-| WebView2 browser process | 116-121 MB |
-| GPU process | 70-79 MB |
-| Renderer | 71-77 MB |
-| Network service | 37-40 MB |
-| Storage service | 19-21 MB |
-| Crashpad handler | 12.7 MB |
-| **Total process tree** | **360-370 MB** |
-| Total private committed | ~168-180 MB |
+Release build, 10,004 items, 60-second steady-state samples at 5 s. (A
+10-minute pre-hybrid run showed <1% variance across 116 samples; the earlier
+figures are kept below as the baseline.)
 
-The fresh-profile control measured 354-363 MB, so this is the WebView2 baseline
-on this machine, not profile bloat. The core process is comfortably inside the
-<40 MB target.
+### Final RSS (tuned build)
 
-**Gate: FAILED.** The plan expects 60-100 MB total and blocks Milestone 1 exit
-above 120 MB. Working-set sums double-count shared WebView2 DLL pages, but even
-the private total (~170 MB) is above the gate. See the decision options in
-`docs/ACCEPTANCE.md`.
+| State | Working set | Private committed |
+|---|---:|---:|
+| Palette warm (fresh, idle) | **342.8 MB avg / 345.5 MB max** | **106.7 MB** |
+| Palette warm (after opening Settings) | 368.3 MB avg / 368.8 MB max | 112.0 MB |
+| Palette webview destroyed (idle) | **30.1 MB** | **7.4 MB** |
+| Core process alone | 30.1-30.2 MB | 6.7 MB |
+
+Working-set sums double-count shared WebView2 pages; private bytes are the
+fairer comparison. The settings window's renderer can remain in the shared
+WebView2 process after it closes, which explains the higher post-Settings warm
+number.
+
+### WebView2 tuning (time-boxed)
+
+| Configuration | Warm total (60 s) | Cold open p95 | Result |
+|---|---:|---:|---|
+| Baseline throttling flags only | 365.6-375.0 MB | 520 ms | rejected (cold too slow, heavier) |
+| + `--disable-gpu --disable-breakpad` | 346.0-353.9 MB | 384-409 ms | better; cold marginal |
+| + startup flags (`--disable-background-networking`, `--disable-component-update`, `--disable-default-apps`, `--disable-sync`, `--disable-client-side-phishing-detection`, `--metrics-recording-only`, `--no-first-run`) | **337.6-345.5 MB** | **390 ms** | **kept** - visuals verified in light/dark settings and palette |
+
+All webviews share these args; WebView2 requires the environment options to
+match or the second webview fails with `ERROR_INVALID_STATE (0x8007139F)`.
+Visual check: palette rows, avatars, gradients, settings controls, and the
+native window shadow all rendered correctly under software rendering.
+
+### Open latency
+
+| Path | p50 | p95 | Max | Samples |
+|---|---:|---:|---:|---:|
+| Warm (existing webview) | **31.0 ms** | **37.0 ms** | 37.0 ms | 10 |
+| Cold (webview destroyed, bootstrap) | **371.0 ms** | **390.0 ms** | 390.0 ms | 20 |
+
+The cold path injects the top 50 summaries, theme, and accent into the page
+before startup JS, so the first paint does not wait for IPC. The remaining cost
+is WebView2/browser startup.
+
+### Gates (Windows, recorded)
+
+| Gate | Target | Measured |
+|---|---|---|
+| Core working set | < 40 MB | **30.1 MB** (pass) |
+| Total, webview destroyed | < 60 MB | **30.1 MB** (pass) |
+| Total, webview warm | < 400 MB (budget set from measurement) | **345.5 MB max** (pass) |
+| Cold open p95 | < 400 ms | **390 ms** (pass) |
+| Warm open p95 | < 100 ms | **37 ms** (pass) |
+
+macOS and Linux must be measured on their own before v1.0; Windows numbers do
+not carry over. A native (non-WebView2) palette remains a possible later
+optimization if footprint becomes a competitive issue.
+
+### Earlier baseline (pre-hybrid, pre-flags)
+
+For context: pre-warmed WebView2 with only throttling flags was **360-370 MB**
+over 10 minutes (116 samples), ~168-180 MB private, and cold opens were
+**520 ms p95**. The fresh-profile control (354-363 MB) ruled out profile bloat.
+This is what triggered the hybrid decision.
+

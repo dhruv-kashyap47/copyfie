@@ -11,9 +11,13 @@ Copyfie is local-first. Clipboard history stays on this device.
 | Source app id/name | `clipboard.db` | Exe path / bundle id / WM_CLASS and friendly name |
 | Source window title | `clipboard.db` | Windows and X11 only; macOS omits it (needs Accessibility) |
 | Timestamps, pin, use count | `clipboard.db` | Unix ms |
-| Settings | `settings.json` | Theme, accent, retention, pause, shortcut |
+| Settings | `settings.json` | Theme, accent, retention, pause, shortcut, palette lifecycle |
 | Logs | `logs/` | Startup/capture/paste outcomes, ids and reasons only |
+| Webview cache | WebView2 profile | Theme/accent cache for first paint; the cold bootstrap snapshot lives only in page memory |
 
+The cold-start bootstrap injects the top 50 **summaries** (same data already in
+the local database) into the page's initialization script. It is not written to
+disk, not sent anywhere, and is discarded when the webview is destroyed.
 Images and files are not captured in Milestone 1 (M2-04/M2-05). No rich text
 or HTML is stored.
 
@@ -49,10 +53,11 @@ Windows: `%APPDATA%\com.copyfie.app\`
 macOS: `~/Library/Application Support/com.copyfie.app/`
 Linux: `~/.local/share/com.copyfie.app/`
 
-Delete individual items with `Cmd/Ctrl+Backspace` in the palette. Bulk clear is
-available through the `history_clear` command; a full Settings/limited-mode
-button lands with M2-09/M2-15. Uninstalling keeps history by default; `--purge`
-(M2-23) will delete it.
+Delete individual items with `Cmd/Ctrl+Backspace` in the palette. **Settings →
+Clear history** deletes all unpinned items (optionally including pinned, with a
+confirmation). After a trial, Clear history remains available even in locked
+mode (M2-15). Uninstalling keeps history by default; `--purge` (M2-23) will
+delete it.
 
 ## Trial and licence (later)
 

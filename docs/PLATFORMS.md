@@ -12,20 +12,33 @@
 | Paste chord | `SendInput` via enigo | `CGEvent` via enigo, keycode 9 for V | XTEST via enigo | n/a |
 | Tray | Yes | Menu bar | AppIndicator/KSNI (desktop dependent) | partial |
 | Autostart | `HKCU\...\Run` | LaunchAgent | XDG autostart | XDG autostart |
+| Palette lifecycle | Hybrid: warm + idle destroy; cold bootstrap | Same (unmeasured) | Same (unmeasured) | n/a |
+| Warm/destroyed RSS | 342.8/345.5 MB warm; 30.1 MB destroyed | **M1-14 pending** | **M1-15 pending** | n/a |
 | Verified in M1 | **Yes, end-to-end** | Compile-checked only | Compile-checked only | n/a |
 
 ## Platform notes
 
 ### Windows
 
-- The palette uses custom browser args (`--disable-background-timer-throttling`,
-  `--disable-renderer-backgrounding`, `--disable-backgrounding-occluded-windows`)
-  so the hidden WebView keeps painting. **Runtime-created webviews must pass the
-  same args**, or WebView2 fails with `ERROR_INVALID_STATE (0x8007139F)`.
+- The palette webview is **hybrid**: pre-warmed while active, destroyed after
+  10 idle minutes (default). The core keeps capturing with no webview. Settings
+  expose `Auto` / `Always` / `Never`.
+- Custom browser args are shared by every webview: throttling prevention,
+  `--disable-gpu`, `--disable-breakpad`, and startup flags (no background
+  networking, component updates, first run, etc.). **Runtime-created webviews
+  must pass the same args**, or WebView2 fails with `ERROR_INVALID_STATE
+  (0x8007139F)`.
+- Measured on this machine (release, 10k items): warm **342.8 MB avg / 345.5 MB
+  max** (106.7 MB private), destroyed **30.1 MB** (7.4 MB private), cold open
+  **390 ms p95**, warm open **37 ms p95**. The warm budget is **<400 MB**.
 - Elevated targets: UIPI blocks synthetic input. The clipboard still receives
-  the item; explicit detection and a notice are M2-11.
+  the item; explicit detection and a notice are M2-11. The same restriction
+  affects automation: synthetic keys are dropped while an elevated window is
+  foreground.
 - The foreground lock can deny `SetForegroundWindow`. Copyfie attaches to the
   foreground thread's input queue for user-triggered shows and paste restores.
+- Destroying the palette must not exit the app; the run loop prevents exit when
+  the last window closes unless the tray explicitly quits.
 
 ### macOS
 
@@ -59,5 +72,7 @@
 ## Known gaps before v1.0
 
 - macOS/Linux runtime behaviour needs the M1-13 manual matrix and CI smoke.
+- macOS and Linux RAM/open measurements are separate tasks (**M1-14**,
+  **M1-15**); do not assume the Windows budget or open numbers.
 - Wayland (M2-12), macOS Accessibility onboarding (M2-10), elevated-target
   detection (M2-11), image/file capture (M2-04/05), blocklist UI (M2-08).

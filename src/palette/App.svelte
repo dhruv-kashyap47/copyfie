@@ -8,12 +8,14 @@
     hotkeyStatus as fetchHotkeyStatus,
     listHistory,
     openSettings,
+    palettePainted,
     pasteItem,
     pinItem,
     searchHistory,
     settingsGet,
     type HotkeyStatus,
   } from "../lib/ipc";
+  import { readBootstrap } from "../lib/bootstrap";
   import { filterItems } from "../lib/localSearch";
   import { mapKey, moveSelection } from "../lib/keymap";
   import { modifierLabel } from "../lib/format";
@@ -32,10 +34,11 @@
 
   let query = $state("");
   let filter = $state<Filter>("all");
-  let recent = $state<ItemSummary[]>([]);
+  const boot = readBootstrap();
+  let recent = $state<ItemSummary[]>(boot?.items ?? []);
   let fts = $state<ItemSummary[] | null>(null);
   let selected = $state(0);
-  let status = $state<"loading" | "idle" | "error">("loading");
+  let status = $state<"loading" | "idle" | "error">(boot ? "idle" : "loading");
   let errorMessage = $state<string | null>(null);
   let toast = $state<string | null>(null);
   let composing = $state(false);
@@ -55,6 +58,19 @@
 
   function describe(cause: unknown): string {
     return cause instanceof Error ? cause.message : String(cause);
+  }
+
+  function schedulePainted(openId: number) {
+    if (openId <= 0) {
+      return;
+    }
+    requestAnimationFrame(() => {
+      requestAnimationFrame(() => {
+        void palettePainted(openId).catch(() => {
+          // Metrics are best-effort; never affect the palette.
+        });
+      });
+    });
   }
 
   function showToast(message: string) {
@@ -167,9 +183,23 @@
   });
 
   onMount(() => {
+    if (boot) {
+      applyTheme(boot.theme, boot.accent);
+      cacheTheme(boot.theme, boot.accent);
+    }
+
     void refresh();
     void refreshHotkey();
     void refreshTheme();
+
+    if (boot && boot.openId > 0) {
+      // Cold start: the palette:open event was emitted before this webview
+      // finished loading, so paint is reported from the bootstrap path.
+      schedulePainted(boot.openId);
+      requestAnimationFrame(() => {
+        document.getElementById("search-input")?.focus();
+      });
+    }
 
     const focusInput = () => {
       document.getElementById("search-input")?.focus();
@@ -196,7 +226,7 @@
       }
     });
 
-    listen("palette:open", () => {
+    listen<{ openId: number; cold: boolean }>("palette:open", (event) => {
       query = "";
       filter = "all";
       composing = false;
@@ -204,6 +234,7 @@
       toast = null;
       void refresh();
       void refreshHotkey();
+      schedulePainted(event.payload.openId);
       requestAnimationFrame(() => {
         document.getElementById("search-input")?.focus();
       });

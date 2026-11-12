@@ -1,0 +1,587 @@
+﻿{
+    "capturedAt":  "2026-11-12T18:27:19.2558262+05:30",
+    "platform":  "windows",
+    "arch":  "AMD64",
+    "durationSeconds":  60,
+    "intervalSeconds":  5,
+    "samples":  12,
+    "totalMbMin":  337.6,
+    "totalMbAvg":  342.8,
+    "totalMbMax":  345.5,
+    "firstSample":  {
+                        "at":  "2026-11-12T18:26:18.2413643+05:30",
+                        "totalMb":  337.6,
+                        "processes":  [
+                                          {
+                                              "pid":  4444,
+                                              "name":  "copyfie.exe",
+                                              "mb":  30
+                                          },
+                                          {
+                                              "pid":  7076,
+                                              "name":  "msedgewebview2.exe",
+                                              "mb":  116.5
+                                          },
+                                          {
+                                              "pid":  2648,
+                                              "name":  "msedgewebview2.exe",
+                                              "mb":  12.8
+                                          },
+                                          {
+                                              "pid":  9356,
+                                              "name":  "msedgewebview2.exe",
+                                              "mb":  40.9
+                                          },
+                                          {
+                                              "pid":  3116,
+                                              "name":  "msedgewebview2.exe",
+                                              "mb":  35.9
+                                          },
+                                          {
+                                              "pid":  6656,
+                                              "name":  "msedgewebview2.exe",
+                                              "mb":  22.2
+                                          },
+                                          {
+                                              "pid":  15428,
+                                              "name":  "msedgewebview2.exe",
+                                              "mb":  79.3
+                                          }
+                                      ]
+                    },
+    "lastSample":  {
+                       "at":  "2026-11-12T18:27:14.2378810+05:30",
+                       "totalMb":  340.4,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30.2
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  117.1
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  15.6
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.8
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.6
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.3
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.8
+                                         }
+                                     ]
+                   },
+    "series":  [
+                   {
+                       "at":  "2026-11-12T18:26:18.2413643+05:30",
+                       "totalMb":  337.6,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  116.5
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  12.8
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.9
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.9
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.2
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  79.3
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:26:23.3623170+05:30",
+                       "totalMb":  345.5,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  116.4
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  21.3
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.9
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.8
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.2
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.8
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:26:28.4529137+05:30",
+                       "totalMb":  345.5,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  116.4
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  21.3
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.9
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.8
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.2
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:26:33.5518485+05:30",
+                       "totalMb":  345.5,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  116.4
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  21.3
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.9
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.8
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.2
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:26:38.6422277+05:30",
+                       "totalMb":  345.5,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  116.4
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  21.3
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.9
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.8
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.2
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:26:43.7207986+05:30",
+                       "totalMb":  345.5,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  116.4
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  21.3
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.9
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.8
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.2
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:26:48.8132537+05:30",
+                       "totalMb":  345.5,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  116.4
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  21.3
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.9
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.8
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.2
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:26:53.8908359+05:30",
+                       "totalMb":  340.8,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  117.1
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  15.6
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.8
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.6
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.3
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  79.5
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:26:58.9716466+05:30",
+                       "totalMb":  341,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30.2
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  117.1
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  15.6
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.8
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.6
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.3
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  79.5
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:27:04.0620521+05:30",
+                       "totalMb":  341,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30.2
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  117.1
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  15.6
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.8
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.6
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.3
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  79.5
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:27:09.1559088+05:30",
+                       "totalMb":  340.4,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30.2
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  117.1
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  15.6
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.8
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.6
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.3
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.8
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T18:27:14.2378810+05:30",
+                       "totalMb":  340.4,
+                       "processes":  [
+                                         {
+                                             "pid":  4444,
+                                             "name":  "copyfie.exe",
+                                             "mb":  30.2
+                                         },
+                                         {
+                                             "pid":  7076,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  117.1
+                                         },
+                                         {
+                                             "pid":  2648,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  15.6
+                                         },
+                                         {
+                                             "pid":  9356,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  40.8
+                                         },
+                                         {
+                                             "pid":  3116,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  35.6
+                                         },
+                                         {
+                                             "pid":  6656,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  22.3
+                                         },
+                                         {
+                                             "pid":  15428,
+                                             "name":  "msedgewebview2.exe",
+                                             "mb":  78.8
+                                         }
+                                     ]
+                   }
+               ]
+}

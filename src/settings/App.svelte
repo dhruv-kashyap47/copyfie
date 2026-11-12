@@ -21,6 +21,8 @@
   let retention = $state<number>(30);
   let paused = $state(false);
   let launchAtLogin = $state(false);
+  let paletteReady = $state("auto");
+  let paletteIdleMinutes = $state(10);
   let hotkey = $state("");
   let recording = $state(false);
   let pendingHotkey = $state<string | null>(null);
@@ -46,6 +48,8 @@
     paused = loaded.capturePaused;
     launchAtLogin = loaded.launchAtLogin;
     hotkey = loaded.hotkey;
+    paletteReady = loaded.paletteReady;
+    paletteIdleMinutes = loaded.paletteIdleMinutes;
   }
 
   async function reload() {
@@ -73,6 +77,8 @@
       capturePaused: paused,
       launchAtLogin,
       hotkey,
+      paletteReady,
+      paletteIdleMinutes: Number(paletteIdleMinutes),
     };
 
     try {
@@ -239,6 +245,33 @@
           aria-label="Accent color"
         />
       </div>
+    </section>
+
+    <section>
+      <h2>Palette</h2>
+      <div class="row">
+        <label for="palette-ready">Keep palette ready</label>
+        <select id="palette-ready" bind:value={paletteReady} onchange={persist}>
+          <option value="auto">Auto (recommended)</option>
+          <option value="always">Always</option>
+          <option value="never">Never</option>
+        </select>
+      </div>
+      {#if paletteReady === "auto"}
+        <div class="row">
+          <label for="palette-idle">Forget after</label>
+          <select id="palette-idle" bind:value={paletteIdleMinutes} onchange={persist}>
+            <option value={5}>5 minutes</option>
+            <option value={10}>10 minutes</option>
+            <option value={30}>30 minutes</option>
+          </select>
+        </div>
+      {/if}
+      <p class="hint">
+        Auto keeps the palette warm while you work and releases its memory after
+        the idle period. Always keeps it pre-warmed; Never creates it on every
+        hotkey (lowest idle memory, slower open).
+      </p>
     </section>
 
     <section>

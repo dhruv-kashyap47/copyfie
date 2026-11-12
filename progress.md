@@ -640,3 +640,70 @@ The 60-100 MB plan estimate was informed by native/GPUI apps (Ropy ~57 MB); a si
 ### Next up
 
 - **Await the RAM gate decision.** Then either implement the chosen option and re-measure, or record the raised budget and finish M1-13.
+
+---
+
+## 2026-11-12 — Session 14 (Milestone 1, hybrid RAM decision + M1-13)
+
+**Scope:** Implement the user's decision: hybrid palette lifecycle, WebView2 tuning, cold-path optimization, per-OS gates, re-measurement, and the M1-13 acceptance pass.
+
+### Decision implemented
+
+**Hybrid (Auto, default):** the palette is pre-warmed while the user is active; after **10 idle minutes** the webview is destroyed and only the core process stays resident. The next hotkey creates it cold, then it is warm again. Settings expose **Keep palette ready: Auto / Always / Never** and **Forget after: 5 / 10 / 30 minutes**.
+
+**Native palette (option 4) deferred** and recorded as a possible later rewrite if the warm WebView2 footprint becomes a competitive problem. It is not in M1 or v1.0 scope.
+
+### Implementation
+
+- **`PaletteManager`** (`src-tauri/src/palette.rs`): one place owns warm/cold show, pre-warm, idle destruction, settings application, and paint metrics. The palette window is now built at runtime (removed from `tauri.conf.json`) so it can be destroyed and recreated with identical options.
+- **No-exit core:** destroying the last window triggered Tauri's default exit; the run loop now handles `RunEvent::ExitRequested` and prevents exit unless a quit code is set (tray **Quit**). This was the critical hybrid bug; capture and the hotkey survive with no windows.
+- **Cold path:** a worker thread builds the hidden window with an initialization script containing the top 50 summaries, theme, accent, and `openId`. The page paints from the bootstrap without waiting for IPC, then reconciles. Warm/cold paints are reported via `palette_painted(openId)` and logged as `palette_open_ms=<n> cold=<bool>`.
+- **Settings:** `palette_ready` and `palette_idle_minutes` in `settings.json`; sanitized; applied without restart (settings save pre-warms or destroys as needed). UI section added to the settings window. Also added **Clear history** (pinned kept by default, optional including pinned).
+- **Idle monitor:** 10 s tick; Auto destroys after the timeout, Always never, Never destroys on hide. The core keeps capturing throughout.
+- **Test hook:** a second launch with `--palette-destroy` destroys the hidden webview in the running instance (single-instance callback) for cold-open measurement.
+- **Harness:** `scripts/perf/open_latency.py` drives warm/cold opens, handles log rotation, and reports p50/p95. `rss.ps1` samples working set; private bytes recorded separately.
+
+### WebView2 tuning (time-boxed, kept)
+
+| Config | Warm total | Cold p95 | Verdict |
+|---|---:|---:|---|
+| Baseline throttling flags | 365.6-375.0 MB | 520 ms | rejected |
+| + `--disable-gpu --disable-breakpad` | 346.0-353.9 MB | 384-409 ms | better, cold marginal |
+| + startup flags (no background networking/component update/default apps/sync/phishing detection/first run, metrics only) | **337.6-345.5 MB** | **390 ms** | **kept** |
+
+Visuals verified in light and dark (palette rows/avatars/gradients, settings controls, native window shadow). All webviews share the args; WebView2 requires matching environment options.
+
+### Final gates (Windows, release, 10,004 items)
+
+| Gate | Target | Measured |
+|---|---|---|
+| Core working set | < 40 MB | **30.1 MB** |
+| Total with webview destroyed | < 60 MB | **30.1 MB** (7.4 MB private) |
+| Total with webview warm | budget from measurement | **342.8 MB avg / 345.5 MB max** (106.7 MB private) → budget **< 400 MB** |
+| Cold open p95 | < 400 ms | **390 ms** (20 runs; p50 371) |
+| Warm open p95 | < 100 ms | **37 ms** (10 runs; p50 31) |
+
+Working-set sums double-count shared WebView2 pages; private bytes are reported too. After opening Settings, the warm total was 368.3/368.8 MB because the settings renderer lingers in the shared WebView2 process; the 400 MB budget covers it.
+
+### M1-13 acceptance
+
+- `docs/ACCEPTANCE.md` updated: all Windows criteria pass; macOS/Linux runtime remain platform measurements.
+- New tasks **M1-14 (macOS)** and **M1-15 (Linux X11)** record RAM/open gates separately; Windows numbers do not apply to them.
+- `PLAN.md`, `task.md`, `docs/PERF.md`, `docs/ARCHITECTURE.md`, `docs/PLATFORMS.md`, `docs/PRIVACY.md`, `docs/TESTING.md`, and `README.md` updated with the hybrid lifecycle, gates, bootstrap, and test hooks.
+- Checks: `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` (14 suites), `npm run check`, `npm test` (33), `npm run build`, `npm run size:check` (**32.3 KB gz**), `cargo deny` → all clean.
+- Release build succeeds (`tauri build --no-bundle`); no installers in M1 (M2-21).
+
+### Notes / follow-ups
+
+- Automation lesson: synthetic keys are dropped while an **elevated** window is foreground (UIPI). This initially made the hotkey look broken; activate a normal window before input tests.
+- The log plugin rotates during long runs; the open-latency script now reads all rotated files.
+- The settings renderer can linger after close; that is reflected in the warm budget.
+- Native palette rewrite is a possible future optimization only.
+- **Stop here.** Do not start v1.0 tasks until explicitly instructed. Remaining M1 measurement tasks (M1-14/M1-15) require macOS/Linux.
+
+### Measurements
+
+- Warm 342.8 MB avg / 345.5 MB max (106.7 MB private); destroyed 30.1 MB (7.4 MB private); core 30.1 MB.
+- Cold open 371/390 ms p50/p95; warm 31/37 ms.
+- Capture 20.1/28.0 ms; local filter 5.36/7.70 ms; FTS 41.0/46.8 ms; insert 0.46/0.90 ms.
+- Frontend bundle 32.3 KB gz (two pages, 50 KB budget).

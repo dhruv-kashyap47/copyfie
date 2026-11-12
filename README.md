@@ -49,12 +49,16 @@ lands in M1-09; this is intentional pre-warm behaviour, not a failed launch.
 
 ### Settings
 
-Open with `Cmd/Ctrl+,` or **Tray → Settings…**.
+Open with `Cmd/Ctrl+,`, the tray, or **Tray → Settings…**.
 
 - **Appearance:** theme (System / Light / Dark) and accent color, applied live to
   both windows and cached for instant paint.
-- **History:** retention (7/30/90/365 days or Forever; default 30) and pause
-  capture. Retention applies to newly captured items; pinned items never expire.
+- **Palette:** **Keep palette ready** — `Auto` (hybrid, default), `Always`, or
+  `Never`; and for Auto, **Forget after** 5 / 10 / 30 minutes. Auto keeps the
+  palette fast while you work and releases its ~340 MB WebView2 footprint after
+  the idle period; the core (~30 MB) keeps capturing either way.
+- **History:** retention (7/30/90/365 days or Forever; default 30), pause
+  capture, and Clear history (pinned kept by default; optional including pinned).
 - **Shortcut:** record a replacement global shortcut. A conflicting chord is
   rejected and the previous shortcut stays active.
 - **Startup:** launch at login.

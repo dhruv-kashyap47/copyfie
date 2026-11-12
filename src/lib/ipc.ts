@@ -76,6 +76,8 @@ export interface SettingsView {
   launchAtLogin: boolean;
   hotkey: string;
   hotkeyRegistered: boolean;
+  paletteReady: string;
+  paletteIdleMinutes: number;
 }
 
 export interface SettingsInput {
@@ -85,6 +87,8 @@ export interface SettingsInput {
   capturePaused: boolean;
   launchAtLogin: boolean;
   hotkey: string;
+  paletteReady: string;
+  paletteIdleMinutes: number;
 }
 
 export function settingsGet(): Promise<SettingsView> {
@@ -97,6 +101,11 @@ export function settingsSave(input: SettingsInput): Promise<SettingsView> {
 
 export function openSettings(): Promise<void> {
   return invoke<void>("open_settings");
+}
+
+/** Called by the palette after the first paint of an open. */
+export function palettePainted(openId: number): Promise<void> {
+  return invoke<void>("palette_painted", { openId });
 }
 
 export function hidePalette(): Promise<void> {

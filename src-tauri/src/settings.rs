@@ -19,6 +19,8 @@ pub const DEFAULT_HOTKEY: &str = "CommandOrControl+Shift+Space";
 pub const DEFAULT_THEME: &str = "system";
 pub const DEFAULT_ACCENT: &str = "#9D86FF";
 pub const DEFAULT_RETENTION_DAYS: u32 = 30;
+pub const DEFAULT_PALETTE_READY: &str = "auto";
+pub const DEFAULT_PALETTE_IDLE_MINUTES: u32 = 10;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -35,6 +37,12 @@ pub struct Settings {
     pub retention_days: u32,
     #[serde(default)]
     pub capture_paused: bool,
+    /// `auto` (hybrid), `always`, or `never`.
+    #[serde(default = "default_palette_ready")]
+    pub palette_ready: String,
+    /// Idle minutes before the palette webview is destroyed in `auto` mode.
+    #[serde(default = "default_palette_idle")]
+    pub palette_idle_minutes: u32,
     /// Fields owned by other/newer builds.
     #[serde(flatten)]
     pub extra: Map<String, Value>,
@@ -49,6 +57,8 @@ impl Default for Settings {
             accent: DEFAULT_ACCENT.to_string(),
             retention_days: DEFAULT_RETENTION_DAYS,
             capture_paused: false,
+            palette_ready: DEFAULT_PALETTE_READY.to_string(),
+            palette_idle_minutes: DEFAULT_PALETTE_IDLE_MINUTES,
             extra: Map::new(),
         }
     }
@@ -68,6 +78,12 @@ impl Settings {
         } else {
             self.retention_days.clamp(1, 365)
         };
+        self.palette_ready = match self.palette_ready.trim().to_ascii_lowercase().as_str() {
+            "always" => "always".to_string(),
+            "never" => "never".to_string(),
+            _ => DEFAULT_PALETTE_READY.to_string(),
+        };
+        self.palette_idle_minutes = self.palette_idle_minutes.clamp(1, 120);
         self.hotkey = self.hotkey.trim().to_string();
         if self.hotkey.is_empty() {
             self.hotkey = DEFAULT_HOTKEY.to_string();
@@ -104,6 +120,14 @@ fn default_accent() -> String {
 
 fn default_retention() -> u32 {
     DEFAULT_RETENTION_DAYS
+}
+
+fn default_palette_ready() -> String {
+    DEFAULT_PALETTE_READY.to_string()
+}
+
+fn default_palette_idle() -> u32 {
+    DEFAULT_PALETTE_IDLE_MINUTES
 }
 
 /// Plans do not need a settings directory abstraction: everything lives next to

@@ -6,6 +6,7 @@
 
 mod commands;
 mod hotkey;
+mod palette;
 mod paste;
 mod platform;
 mod settings;
@@ -24,6 +25,7 @@ use tauri_plugin_global_shortcut::ShortcutState;
 use capture::privacy::CaptureConfig;
 use capture::suppress::Suppressor;
 use hotkey::HotkeyManager;
+use palette::PaletteManager;
 use paste::PasteService;
 use settings::SettingsStore;
 use state::AppState;
@@ -33,7 +35,14 @@ pub fn run() {
     let builder = tauri::Builder::default()
         // Must be the first plugin: a second process exits here and forwards to
         // the running instance instead of starting a duplicate.
-        .plugin(tauri_plugin_single_instance::init(|app, _args, _cwd| {
+        .plugin(tauri_plugin_single_instance::init(|app, args, _cwd| {
+            if args.iter().any(|argument| argument == "--palette-destroy") {
+                if let Some(palette) = app.try_state::<PaletteManager>() {
+                    palette.destroy(app);
+                }
+                return;
+            }
+
             if let Err(error) = commands::window::show_palette(app) {
                 log::warn!(target: "copyfie::window", "second instance could not show the palette: {error}");
             }
@@ -46,6 +55,11 @@ pub fn run() {
         .plugin(
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, _shortcut, event| {
+                    log::debug!(
+                        target: "copyfie::hotkey",
+                        "hotkey event: {:?}",
+                        event.state()
+                    );
                     if event.state() == ShortcutState::Pressed {
                         let started = std::time::Instant::now();
                         let _ = commands::window::show_palette(app);
@@ -79,6 +93,7 @@ pub fn run() {
             commands::settings::settings_save,
             commands::window::hide_palette,
             commands::window::palette_show,
+            commands::window::palette_painted,
             commands::window::open_settings,
         ])
         .setup(|app| {
@@ -116,8 +131,14 @@ pub fn run() {
                 hotkey.clone(),
                 settings_store,
             ));
+            app.manage(PaletteManager::new());
 
             tray::install(app.handle())?;
+
+            if settings.palette_ready != "never" {
+                app.state::<PaletteManager>().prewarm(app.handle());
+            }
+            palette::start_idle_monitor(app.handle().clone());
 
             let registered = match hotkey.try_register(app.handle(), &settings.hotkey) {
                 Ok(()) => {
@@ -156,7 +177,18 @@ pub fn run() {
             }
         });
 
-    builder
-        .run(tauri::generate_context!())
-        .expect("error while running Copyfie");
+    let app = builder
+        .build(tauri::generate_context!())
+        .expect("error while building Copyfie");
+
+    app.run(|_app_handle, event| {
+        // Hybrid lifecycle: the palette webview can be destroyed while the core
+        // keeps capturing. Only an explicit quit (tray `exit(0)`) may close the
+        // process, not the disappearance of the last window.
+        if let tauri::RunEvent::ExitRequested { api, code, .. } = event {
+            if code.is_none() {
+                api.prevent_exit();
+            }
+        }
+    });
 }
