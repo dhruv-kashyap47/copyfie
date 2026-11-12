@@ -97,6 +97,7 @@ cargo deny --config scripts/license/cargo-deny.toml check
 
 ## Docs
 
+- [`docs/DESIGN.md`](docs/DESIGN.md) — Liquid Glass redesign spec, tokens, tiers, a11y.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — components, flows, invariants, IPC.
 - [`docs/PLATFORMS.md`](docs/PLATFORMS.md) — support matrix and platform caveats.
 - [`docs/PRIVACY.md`](docs/PRIVACY.md) — what is stored, what is never read.

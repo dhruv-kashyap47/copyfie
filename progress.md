@@ -707,3 +707,93 @@ Working-set sums double-count shared WebView2 pages; private bytes are reported 
 - Cold open 371/390 ms p50/p95; warm 31/37 ms.
 - Capture 20.1/28.0 ms; local filter 5.36/7.70 ms; FTS 41.0/46.8 ms; insert 0.46/0.90 ms.
 - Frontend bundle 32.3 KB gz (two pages, 50 KB budget).
+
+---
+
+## 2026-11-12 — Session 15 (MR-01: Liquid Glass design spec)
+
+**Scope:** study the supplied references, record what could and could not be read, add the
+redesign tasks, and write `docs/DESIGN.md` **before any UI code**. Stopped for approval.
+
+### Done
+
+- Added **MR-01…MR-08** to `task.md` as a separate requested redesign milestone. MR-01 is
+  `in-progress` until the spec is approved; the v1.0 task order is unchanged.
+- Wrote `docs/DESIGN.md`: extracted principles, surface map, light/dark tokens, concentric
+  radii/spacing/type/motion, Tier 1–4 rendering plan, accessibility contract, perf guardrails,
+  component/file layout, asset/legal notes, acceptance checklist, and open risks.
+- Read all eight references. The **Figma community file is not readable as text** (it returned
+  only “iOS 26 Liquid Glass”); nothing was inferred from it. Apple pages needed their JSON
+  documentation endpoints. The generator's HTML/JS was read directly because its exported
+  CSS/SVG is generated at runtime.
+- Verified the Tauri 2 window-effect APIs against the installed **tauri 2.12.5 /
+  tauri-utils 2.10.2** sources, not memory.
+
+### Reference notes
+
+- **Liquid Glass generator:** controls are width/height, border-radius as a % of the smaller
+  side, inner-shadow colour/blur/spread (default 15/-5), tint colour/opacity (default 0 %),
+  frost blur 0–20 px, noise frequency 0.008 and strength 77, and text shadow/offset. Output is
+  a `::before` tint + inset shadow and a `::after` with `backdrop-filter: blur()` and
+  `filter: url(#glass-distortion)`; the SVG is `feTurbulence` (fractalNoise, 0.008, 2 octaves,
+  seed 92) → `feGaussianBlur` (2) → `feDisplacementMap` (scale 77, R/G). Outer shadow is
+  `0 6px 24px rgba(0,0,0,.2)`. We reuse the filter structure with different values and cite it.
+- **Apple / HIG:** Liquid Glass is a **functional layer** for controls/navigation above content;
+  don't use it in the content layer; use **regular** for text-heavy surfaces, **clear** only
+  over rich media (with ~35 % dimming if bright); tint sparingly and semantically; group
+  toolbar actions; use **concentric** shapes; larger list row heights; scroll-edge effects for
+  legibility; canvas/container grouping and morph IDs for performance; accessibility settings
+  adapt the material.
+- **LogRocket / CSS-Tricks:** layers (highlight, shadow, illumination), lensing, not everywhere,
+  never glass-on-glass, don't mix regular/clear, accessibility/legibility is the main risk,
+  dynamic shape-shifting only where it communicates state.
+- **Tauri:** `WebviewWindowBuilder::effects(WindowEffectsConfig)` and
+  `WebviewWindow::set_effects(...)` exist and **require a transparent window**; `WindowEffect`
+  includes Windows `Acrylic`/`Blur`/`Mica*`, macOS `LiquidGlassRegular`/`Clear` (26+) and older
+  vibrancy materials; **Linux is unsupported**. `macOSPrivateApi` is a no-op since 2.12.1.
+- **Critical finding:** CSS `backdrop-filter` only samples same-document content, not the
+  desktop behind a transparent window (Tauri #15512, #2827; same in Electron). Therefore Tier 1
+  is a convincing **faux-glass** (fill + gradient + noise + specular + shadow) and Tier 2 native
+  material is what provides true desktop frost. Tier 3 refraction is scoped to an in-window
+  floating footer/scroll edge where there is actually a backdrop to refract. This is called out
+  in `docs/DESIGN.md` rather than hidden.
+
+### Decisions
+
+- **One glass surface per window**, content wells are solid at 88–92 %; no glass behind dense
+  text; no nested `backdrop-filter`.
+- **Regular material only**; clear variants are out of scope.
+- **Settings stays solid** (it is a form/content window), tray stays native, toasts/banners are
+  solid. This is a deliberate anti-overuse decision.
+- **Selected row** uses a tint + border + 3 px left bar so state survives reduced transparency,
+  high contrast, and disabled blur.
+- **OS accent is not read** — cross-platform APIs are inconsistent; the user accent remains.
+- **Tier 3 is default-off** until measured; it auto-disables on a frame-time probe and never
+  runs on macOS/Linux/reduced motion/reduced transparency/contrast.
+- **Lite mode** is Tier 1 at 10 px blur, auto-selected on low-end signals or when the perf
+  probe fails; exposed as Auto/Full/Lite in Settings.
+
+### Verification
+
+- Documentation-only change: no frontend or Rust code executed. `git diff` limited to
+  `task.md`, `progress.md`, and `docs/DESIGN.md`.
+- Existing build/test/perf gates are untouched; they will be re-run for MR-02 onward.
+
+### Measurements
+
+- No new measurements. Baseline for comparison remains: core **30.1 MB**, webview destroyed
+  **30.1 MB**, warm **342.8 MB avg / 345.5 MB max**, cold open **390 ms p95**, warm open
+  **37 ms p95** (M1-13).
+
+### Notes / follow-ups
+
+- The Figma file could not be read; if a visual detail is needed later, export a frame or
+  provide a screenshot. We will not guess its contents.
+- The largest implementation risk is `--disable-gpu` + CSS blur (CPU rasterization). MR-08
+  decides between native material, lower blur, and Lite mode based on measurements.
+- macOS/Linux runtime verification remains unavailable on this machine; MR-05/MR-07 will mark
+  those as compile-verified only unless a machine is available.
+
+### Next up
+
+- **Stop and show `docs/DESIGN.md` for approval.** Do not start MR-02 until approved.
