@@ -83,7 +83,19 @@ cargo deny --config scripts/license/cargo-deny.toml check
 |---|---|
 | `src-tauri/` | Tauri shell: commands, windows, hotkey, tray, state wiring. |
 | `crates/copyfie-core/` | Models, hashing, SQLite store, search, retention. No Tauri, no OS APIs. |
+| `platform/` | OS backends and shared clipboard/focus/input traits. |
 | `src/palette/` | Palette webview (Svelte 5 + Vite). |
+| `src/settings/` | Settings webview. |
 | `scripts/license/` | `cargo-deny` policy and license tooling. |
+| `scripts/perf/` | 10k fixture and RSS sampling. |
 | `third_party/licenses/` | Upstream MIT texts for adapted code. |
-| `docs/` | Architecture, platform, privacy, perf, and attribution docs. |
+| `docs/` | Architecture, platforms, privacy, perf, testing, attribution. |
+
+## Docs
+
+- [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — components, flows, invariants, IPC.
+- [`docs/PLATFORMS.md`](docs/PLATFORMS.md) — support matrix and platform caveats.
+- [`docs/PRIVACY.md`](docs/PRIVACY.md) — what is stored, what is never read.
+- [`docs/PERF.md`](docs/PERF.md) — 10k baseline and methodology.
+- [`docs/TESTING.md`](docs/TESTING.md) — automated suites and the manual matrix.
+- [`docs/ATTRIBUTION.md`](docs/ATTRIBUTION.md) — prior art and licence policy.
