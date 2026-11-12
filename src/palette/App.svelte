@@ -3,10 +3,10 @@
   import { listen } from "@tauri-apps/api/event";
 
   import {
-    copyItem,
     deleteItem,
     hidePalette,
     listHistory,
+    pasteItem,
     pinItem,
     searchHistory,
   } from "../lib/ipc";
@@ -213,8 +213,10 @@
     }
 
     try {
-      await copyItem(item.id);
-      showToast("Copied to clipboard");
+      const report = await pasteItem(item.id);
+      if (report.status === "copied") {
+        showToast(report.reason ? `Copied — ${report.reason}` : "Copied to clipboard");
+      }
       void refresh();
     } catch (cause) {
       showToast(describe(cause));

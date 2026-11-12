@@ -386,3 +386,56 @@ PLAN §7 lists `Ctrl+P`/`Ctrl+N` as arrow alternatives and also `Cmd/Ctrl+P` as 
 ### Next up
 
 - **M1-08** — paste orchestrator: hide, restore focus, write with suppression, synthesize paste.
+
+---
+
+## 2026-11-12 — Session 9 (Milestone 1, M1-08)
+
+**Scope:** M1-08 — hide, restore focus, write with suppression, synthesize paste. This session **stops after M1-08**; M1-09 continues next time.
+
+### Done
+
+- **Platform contracts (`copyfie-platform`):** `FocusTarget` (opaque Windows HWND/pid, macOS pid, X11 window), `FocusBackend { capture, restore, is_active }`, and `PasteInput { send_paste }`. `input` module wraps enigo 0.6: **Cmd+V on macOS** using `Key::Other(9)` (the documented keycode fix) and **Ctrl+V elsewhere**. Accessibility prompt is disabled for now, so a denied permission falls back to copy-only instead of an unexpected prompt (M2-10 owns onboarding).
+- **Windows focus:** capture via `GetForegroundWindow`; restore restores minimized windows, attaches to the foreground thread's input queue, brings the window to top, calls `SetForegroundWindow`, then detaches; `is_active` compares handles.
+- **Linux X11 focus:** `_NET_ACTIVE_WINDOW` capture/compare and an EWMH `_NET_ACTIVE_WINDOW` client message for restore, over `x11rb`.
+- **macOS focus:** `NSWorkspace.frontmostApplication` pid, `NSRunningApplication::runningApplicationWithProcessIdentifier` + `activateWithOptions(ActivateAllWindows | ActivateIgnoringOtherApps)`, frontmost-pid check.
+- **Orchestrator (`src-tauri/src/paste`):** `PasteService` remembers the target in `show_palette` only while the palette is hidden, so showing it twice never records itself as the target. On paste: hide palette **and wait until the OS reports it hidden**, restore target, poll `is_active` (700 ms, 10 ms steps), 15 ms input-queue settle, arm suppression, write clipboard, 25 ms clipboard settle, send chord, `touch_used`.
+- **Copy-only fallback:** missing target, restore timeout, clipboard failure, or input failure leaves the text on the clipboard, re-shows the palette, logs the reason, and returns `{ status: "copied", reason }`. The UI shows “Copied — …” instead of pretending to paste.
+- **Command/UI:** `paste_item(id)` returns `{ status, reason }`; Enter now pastes, footer says “Enter paste”; `copy_item` remains for explicit copy-only actions.
+
+### Verification
+
+- **Input layer isolated:** a windowless probe (`paste_probe` example, since removed) sent the chord to a focused WinForms textbox; the log captured `KeyDown Control`, `KeyDown V`, and the textbox received the clipboard text. Confirms enigo/SendInput and the clipboard write.
+- **Full app paste:** launched a WinForms target textbox in a separate process, focused it, started Copyfie with `--show`, pressed Enter in the palette.
+  - Target textbox received exactly `Captured from another app 2026-11-12`.
+  - Log: `restoring paste target` → `target active after 0 ms` → `paste chord sent` → `pasted item id=2`.
+  - Clipboard contained the item; the palette hid.
+  - SQLite: row count unchanged, `captured_at` unchanged, `use_count` incremented → **no echo duplicate or bump**.
+- **Race found and fixed:** the first attempts pasted nowhere because `window.hide()` returns before the OS hides the window, so focus restore raced the hide. Waiting for `is_visible() == false` (400 ms cap) plus the settle delays made it deterministic.
+- **Harness lesson:** debug builds allocate a console window; launching a console probe stole focus and invalidated one test. The diagnostic binary is now `windows_subsystem = "windows"`. Release builds have no console.
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` (14 suites), `npm run check`, `npm test` (22), `npm run build` (23.6 KB gz), `cargo deny` → all clean.
+
+### Decisions
+
+- **One enigo-based input path** for all three OSes, with the macOS keycode exception; avoids three SendInput/CGEvent/XTEST implementations.
+- **Suppression is armed immediately before the clipboard write**, after focus is confirmed. A failed write clears it.
+- **No blind paste:** if `is_active` is not confirmed, nothing is sent; the item goes to the clipboard and the palette returns.
+- **Shift+Enter is currently identical to Enter.** History is plain text only in v1, so there is no rich payload to strip; the images/files variants land with M2-04/M2-05.
+- **Elevated-target detection is deferred to M2-11.** On Windows, UIPI can block the chord into an elevated window; the current behavior is a silent no-op in that target (clipboard still gets the item). Tracked.
+- **`paste_probe` removed** after verification; it was a diagnostic, not product code.
+
+### Measurements
+
+- Paste path observed: focus active at 0 ms in the test, clipboard settle 25 ms, chord sent immediately after → roughly **40–80 ms** on Windows for an already-active target, plus the ~10–30 ms hide wait. Proper p50/p95 instrumentation is M1-11.
+- No RSS measurement yet (M1-12).
+
+### Notes / follow-ups
+
+- macOS/Linux focus restore is **type-checked but not runtime-tested** here; the macOS CI job compiles it and the M1-13 manual matrix must cover both.
+- `copy_item` is still exposed for copy-only actions; the Wayland fallback will use it.
+- Paste log lines contain ids/reasons only — never content.
+- Stop here per instruction. Next session starts at **M1-09**.
+
+### Next up
+
+- **M1-09** — hotkey + first-run conflict detection + rebind + tray + single instance + autostart.

@@ -13,12 +13,13 @@ pub mod concealed;
 pub mod foreground;
 
 use copyfie_platform::system::{SystemClipboard, SystemWatcher};
-use copyfie_platform::PlatformError;
+use copyfie_platform::{FocusBackend, PasteInput, PlatformError};
 
-pub use foreground::X11Foreground;
+pub use foreground::{X11Focus, X11Foreground};
 
 pub type Clipboard = SystemClipboard;
 pub type Watcher = SystemWatcher;
+pub type Paste = copyfie_platform::input::SystemPasteInput;
 
 pub fn new_clipboard() -> Result<Clipboard, PlatformError> {
     SystemClipboard::new(Box::new(concealed::LinuxConcealed))
@@ -30,6 +31,14 @@ pub fn new_watcher() -> Result<Watcher, PlatformError> {
 
 pub fn new_foreground() -> X11Foreground {
     X11Foreground
+}
+
+pub fn new_focus() -> Box<dyn FocusBackend> {
+    Box::new(X11Focus)
+}
+
+pub fn new_paste() -> Box<dyn PasteInput> {
+    Box::new(copyfie_platform::input::SystemPasteInput)
 }
 
 pub fn write_text(text: &str) -> Result<(), PlatformError> {

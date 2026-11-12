@@ -61,6 +61,7 @@ copy of this file.
 | `objc2` | MIT | Objective-C runtime bridge (macOS) |
 | `objc2-app-kit` | MIT | `NSWorkspace` / `NSRunningApplication` (macOS) |
 | `objc2-foundation` | MIT | `NSString` interop (macOS) |
+| `enigo` | MIT | Synthetic Ctrl/Cmd+V on Windows, macOS, and X11 |
 | `tempfile` | MIT OR Apache-2.0 | Atomic staging and tests (dev) |
 | `copyfie-core` | Proprietary (internal) | Models, store, search — not published |
 | `copyfie-platform` | Proprietary (internal) | Platform traits shared by OS backends — not published |

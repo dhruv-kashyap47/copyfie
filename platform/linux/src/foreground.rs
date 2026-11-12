@@ -5,9 +5,11 @@
 //! preferable to keeping a non-`Sync` connection in shared state.
 
 use copyfie_core::SourceApp;
-use copyfie_platform::ForegroundApp;
+use copyfie_platform::{FocusBackend, FocusTarget, ForegroundApp, PlatformError};
 use x11rb::connection::Connection;
-use x11rb::protocol::xproto::{Atom, AtomEnum, ConnectionExt, Window};
+use x11rb::protocol::xproto::{
+    Atom, AtomEnum, ClientMessageData, ClientMessageEvent, ConnectionExt, EventMask, Window,
+};
 use x11rb::rust_connection::RustConnection;
 
 pub struct X11Foreground;
@@ -15,6 +17,99 @@ pub struct X11Foreground;
 impl ForegroundApp for X11Foreground {
     fn current(&self) -> Option<SourceApp> {
         current().ok().flatten()
+    }
+}
+
+/// Capture/restore the active X11 window for the paste orchestrator.
+pub struct X11Focus;
+
+impl FocusBackend for X11Focus {
+    fn capture(&self) -> Option<FocusTarget> {
+        active_window()
+            .ok()
+            .flatten()
+            .map(|window| FocusTarget::X11 { window })
+    }
+
+    fn restore(&self, target: &FocusTarget) -> Result<(), PlatformError> {
+        let FocusTarget::X11 { window } = *target else {
+            return Err(PlatformError::Other(
+                "focus target does not belong to X11".to_string(),
+            ));
+        };
+
+        let (connection, screen_number) =
+            x11rb::connect(None).map_err(|error| PlatformError::Other(error.to_string()))?;
+        let root = connection
+            .setup()
+            .roots
+            .get(screen_number)
+            .ok_or_else(|| PlatformError::Other("X11 screen not found".to_string()))?
+            .root;
+
+        let active_atom = connection
+            .intern_atom(false, b"_NET_ACTIVE_WINDOW")
+            .map_err(|error| PlatformError::Other(error.to_string()))?
+            .reply()
+            .map_err(|error| PlatformError::Other(error.to_string()))?
+            .atom;
+
+        // EWMH activation request; source indication 1 = application.
+        let event = ClientMessageEvent::new(
+            32,
+            window,
+            active_atom,
+            ClientMessageData::from([1_u32, 1, 0, 0, 0]),
+        );
+
+        connection
+            .send_event(
+                false,
+                root,
+                EventMask::SUBSTRUCTURE_REDIRECT | EventMask::SUBSTRUCTURE_NOTIFY,
+                event,
+            )
+            .map_err(|error| PlatformError::Other(error.to_string()))?;
+        connection
+            .flush()
+            .map_err(|error| PlatformError::Other(error.to_string()))?;
+
+        Ok(())
+    }
+
+    fn is_active(&self, target: &FocusTarget) -> bool {
+        let FocusTarget::X11 { window } = *target else {
+            return false;
+        };
+        active_window().ok().flatten() == Some(window)
+    }
+}
+
+fn active_window() -> Result<Option<u32>, Box<dyn std::error::Error>> {
+    let (connection, screen_number) = x11rb::connect(None)?;
+    let root = connection
+        .setup()
+        .roots
+        .get(screen_number)
+        .ok_or("X11 screen not found")?
+        .root;
+
+    active_window_in(&connection, root)
+}
+
+fn active_window_in(
+    connection: &RustConnection,
+    root: Window,
+) -> Result<Option<u32>, Box<dyn std::error::Error>> {
+    let active_atom = intern(connection, "_NET_ACTIVE_WINDOW")?;
+    let Some(window) = first_u32(connection, root, active_atom, AtomEnum::WINDOW)? else {
+        return Ok(None);
+    };
+
+    if window == 0 || window == root {
+        Ok(None)
+    } else {
+        Ok(Some(window))
     }
 }
 
@@ -27,18 +122,14 @@ fn current() -> Result<Option<SourceApp>, Box<dyn std::error::Error>> {
         .ok_or("X11 screen not found")?;
     let root = screen.root;
 
-    let active_atom = intern(&connection, "_NET_ACTIVE_WINDOW")?;
     let pid_atom = intern(&connection, "_NET_WM_PID")?;
     let class_atom = intern(&connection, "WM_CLASS")?;
     let name_atom = intern(&connection, "_NET_WM_NAME")?;
     let utf8_atom = intern(&connection, "UTF8_STRING")?;
 
-    let Some(active) = first_u32(&connection, root, active_atom, AtomEnum::WINDOW)? else {
+    let Some(active) = active_window_in(&connection, root)? else {
         return Ok(None);
     };
-    if active == 0 || active == root {
-        return Ok(None);
-    }
 
     let pid = first_u32(&connection, active, pid_atom, AtomEnum::CARDINAL)?;
     let comm = pid.and_then(process_comm);

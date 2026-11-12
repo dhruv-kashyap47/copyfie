@@ -17,7 +17,7 @@
     <span class="hints">
       <kbd>↑</kbd><kbd>↓</kbd> navigate
       <span class="sep">·</span>
-      <kbd>Enter</kbd> copy
+      <kbd>Enter</kbd> paste
       <span class="sep">·</span>
       <kbd>{modifier}+P</kbd> pin
       <span class="sep">·</span>

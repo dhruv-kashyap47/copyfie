@@ -36,6 +36,14 @@ pub fn show_palette(app: &AppHandle) -> Result<(), String> {
         .get_webview_window("main")
         .ok_or_else(|| "palette window is not available".to_string())?;
 
+    // Capture the target only while the palette is hidden, so showing it twice
+    // in a row never records the palette as its own paste target.
+    if !window.is_visible().unwrap_or(false) {
+        if let Some(state) = app.try_state::<crate::state::AppState>() {
+            state.paste.remember_target();
+        }
+    }
+
     place_on_cursor_monitor(&window, app).map_err(|error| error.to_string())?;
 
     window.show().map_err(|error| error.to_string())?;

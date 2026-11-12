@@ -8,15 +8,18 @@
 #![cfg(target_os = "macos")]
 
 pub mod concealed;
+pub mod focus;
 pub mod foreground;
 
 use copyfie_platform::system::{SystemClipboard, SystemWatcher};
-use copyfie_platform::PlatformError;
+use copyfie_platform::{FocusBackend, PasteInput, PlatformError};
 
+pub use focus::MacFocus;
 pub use foreground::MacForeground;
 
 pub type Clipboard = SystemClipboard;
 pub type Watcher = SystemWatcher;
+pub type Paste = copyfie_platform::input::SystemPasteInput;
 
 pub fn new_clipboard() -> Result<Clipboard, PlatformError> {
     SystemClipboard::new(Box::new(concealed::MacConcealed))
@@ -28,6 +31,14 @@ pub fn new_watcher() -> Result<Watcher, PlatformError> {
 
 pub fn new_foreground() -> MacForeground {
     MacForeground
+}
+
+pub fn new_focus() -> Box<dyn FocusBackend> {
+    Box::new(MacFocus)
+}
+
+pub fn new_paste() -> Box<dyn PasteInput> {
+    Box::new(copyfie_platform::input::SystemPasteInput)
 }
 
 pub fn write_text(text: &str) -> Result<(), PlatformError> {

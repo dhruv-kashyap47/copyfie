@@ -5,6 +5,7 @@
 //! code lives under `platform/`. Keep this crate thin.
 
 mod commands;
+mod paste;
 mod platform;
 mod state;
 mod store;
@@ -37,6 +38,7 @@ pub fn run() {
             commands::history::history_delete,
             commands::history::history_clear,
             commands::paste::copy_item,
+            commands::paste::paste_item,
             commands::window::hide_palette,
             commands::window::palette_show,
         ])
@@ -59,7 +61,11 @@ pub fn run() {
                 suppressor.clone(),
             );
 
-            app.manage(AppState::new(store, suppressor));
+            app.manage(AppState::new(
+                store,
+                suppressor,
+                Arc::new(paste::PasteService::new()),
+            ));
 
             if std::env::args().any(|argument| argument == "--show") {
                 if let Err(error) = commands::window::show_palette(app.handle()) {

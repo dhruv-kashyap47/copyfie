@@ -6,16 +6,23 @@
 use std::sync::Arc;
 
 use crate::capture::Suppressor;
+use crate::paste::PasteService;
 use crate::store::StoreHandle;
 
 pub struct AppState {
     pub store: StoreHandle,
     /// Shared with the capture pipeline so writes from paste/copy never echo.
     pub suppressor: Arc<Suppressor>,
+    /// Focus capture/restore + synthetic input for paste.
+    pub paste: Arc<PasteService>,
 }
 
 impl AppState {
-    pub fn new(store: StoreHandle, suppressor: Arc<Suppressor>) -> Self {
-        Self { store, suppressor }
+    pub fn new(store: StoreHandle, suppressor: Arc<Suppressor>, paste: Arc<PasteService>) -> Self {
+        Self {
+            store,
+            suppressor,
+            paste,
+        }
     }
 }

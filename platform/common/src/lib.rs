@@ -10,10 +10,21 @@
 use copyfie_core::SourceApp;
 use thiserror::Error;
 
+pub mod focus;
 pub mod source_app;
+
+#[cfg(feature = "input")]
+pub mod input;
 
 #[cfg(feature = "system-clipboard")]
 pub mod system;
+
+pub use focus::{FocusBackend, FocusTarget};
+
+/// Sends the paste chord (Ctrl+V / Cmd+V) to the foreground app.
+pub trait PasteInput: Send + Sync {
+    fn send_paste(&self) -> Result<(), PlatformError>;
+}
 
 /// Clipboard formats available for the current change, with no payload read.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]

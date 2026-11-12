@@ -8,8 +8,11 @@ description = "Platform traits and shared clipboard types for Copyfie"
 [features]
 # Enables the shared `clipboard-rs` adapter used by the desktop backends.
 system-clipboard = ["dep:clipboard-rs"]
+# Enables the shared `enigo` synthetic-input backend.
+input = ["dep:enigo"]
 
 [dependencies]
 clipboard-rs = { version = "0.3.5", default-features = false, optional = true }
 copyfie-core = { path = "../../crates/copyfie-core", version = "0.1.0" }
+enigo = { version = "0.6", optional = true }
 thiserror = "2"

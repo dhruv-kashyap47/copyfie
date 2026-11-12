@@ -44,6 +44,15 @@ export function copyItem(id: number): Promise<void> {
   return invoke<void>("copy_item", { id });
 }
 
+export interface PasteReport {
+  status: "pasted" | "copied";
+  reason: string | null;
+}
+
+export function pasteItem(id: number): Promise<PasteReport> {
+  return invoke<PasteReport>("paste_item", { id });
+}
+
 export function hidePalette(): Promise<void> {
   return invoke<void>("hide_palette");
 }
