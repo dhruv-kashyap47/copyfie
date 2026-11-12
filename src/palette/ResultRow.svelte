@@ -1,6 +1,6 @@
 <script lang="ts">
   import type { ItemSummary } from "../lib/types";
-  import { formatBytes, relativeTime, sourceColor, sourceInitial } from "../lib/format";
+  import { relativeTime, thumbUrl } from "../lib/format";
   import { icons } from "../lib/icons";
 
   let {
@@ -20,17 +20,12 @@
   } = $props();
 
   const time = $derived(relativeTime(item.capturedAt));
-  const preview = $derived(item.preview.trim() || (item.kind === "image" ? "Image" : item.kind === "files" ? "Files" : "(empty)"));
-  const detail = $derived(
-    item.kind === "image" && item.width !== null && item.height !== null
-      ? `${item.width}×${item.height} · ${formatBytes(item.byteSize)}`
-      : item.kind === "files"
-        ? "Files"
-        : "Text",
+  const preview = $derived(
+    item.preview.trim() || (item.kind === "image" ? "Image" : item.kind === "files" ? "Files" : "(empty)"),
   );
-  const kindIcon = $derived(
-    item.kind === "image" ? icons.image : item.kind === "files" ? icons.files : icons.text,
-  );
+  const kindIcon = $derived(item.kind === "image" ? icons.image : icons.files);
+  const hasThumb = $derived(item.kind === "image" && Boolean(item.thumbName));
+  const showType = $derived(item.kind === "image" || item.kind === "files");
 </script>
 
 <div
@@ -49,38 +44,43 @@
     }
   }}
 >
-  <span class="kind" data-kind={item.kind}>
-    <svg
-      viewBox="0 0 24 24"
-      fill="none"
-      stroke="currentColor"
-      stroke-width="2"
-      stroke-linecap="round"
-      stroke-linejoin="round"
-      aria-hidden="true"
-    >
-      {@html kindIcon}
-    </svg>
-  </span>
+  {#if hasThumb && item.thumbName}
+    <img class="thumb" src={thumbUrl(item.thumbName)} alt="" />
+  {:else if item.kind !== "text"}
+    <span class="kind">
+      <svg
+        viewBox="0 0 24 24"
+        fill="none"
+        stroke="currentColor"
+        stroke-width="1.5"
+        stroke-linecap="round"
+        stroke-linejoin="round"
+        aria-hidden="true"
+      >
+        {@html kindIcon}
+      </svg>
+    </span>
+  {/if}
 
   <div class="body">
     <p class="preview">{preview}</p>
     <div class="meta">
       {#if item.sourceAppName}
-        <span class="avatar" style={`background:${sourceColor(item.sourceAppName)}`}>{sourceInitial(item.sourceAppName)}</span>
         <span class="source">{item.sourceAppName}</span>
         <span class="dot">·</span>
       {/if}
-      <span>{time}</span>
-      <span class="dot">·</span>
-      <span>{detail}</span>
+      <span class="time">{time}</span>
+      {#if showType}
+        <span class="dot">·</span>
+        <span>{item.kind === "image" ? "Image" : "Files"}</span>
+      {/if}
       {#if item.isPinned}
         <svg
           class="pin"
           viewBox="0 0 24 24"
           fill="none"
           stroke="currentColor"
-          stroke-width="2"
+          stroke-width="1.5"
           stroke-linecap="round"
           stroke-linejoin="round"
           role="img"
@@ -93,37 +93,26 @@
   </div>
 
   {#if shortcut !== null}
-    <kbd class="shortcut">{shortcut}</kbd>
+    <span class="shortcut">{shortcut}</span>
   {/if}
 </div>
 
 <style>
   .row {
     display: flex;
+    flex: none;
     align-items: center;
     gap: 10px;
-    min-height: var(--row-height);
-    padding: 7px 10px;
+    height: var(--row-height);
+    padding: 0 10px;
     border-radius: var(--radius-row);
-    box-shadow: inset 0 0 0 1px transparent;
     cursor: default;
     position: relative;
   }
 
   .row.selected {
-    background: var(--row-selected);
-    box-shadow: inset 0 0 0 1px var(--row-selected-border);
-  }
-
-  .row.selected::before {
-    content: "";
-    position: absolute;
-    left: 0;
-    top: 9px;
-    bottom: 9px;
-    width: 3px;
-    border-radius: 0 3px 3px 0;
-    background: var(--selected-bar);
+    background: var(--selection-bg);
+    color: var(--selection-fg);
   }
 
   .row:hover:not(.selected) {
@@ -133,30 +122,24 @@
   .kind {
     display: grid;
     place-items: center;
-    width: 28px;
-    height: 28px;
+    width: 16px;
+    height: 16px;
     flex: none;
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-sm);
-    background: var(--control-bg);
-    color: var(--fg-subtle);
-  }
-
-  .kind[data-kind="text"] {
-    color: var(--kind-text);
-  }
-
-  .kind[data-kind="image"] {
-    color: var(--kind-image);
-  }
-
-  .kind[data-kind="files"] {
-    color: var(--kind-files);
+    color: var(--text-2);
   }
 
   .kind svg {
     width: 16px;
     height: 16px;
+  }
+
+  .thumb {
+    width: 34px;
+    height: 28px;
+    flex: none;
+    border-radius: 8px;
+    object-fit: cover;
+    background: var(--surface-2);
   }
 
   .body {
@@ -166,43 +149,33 @@
 
   .preview {
     margin: 0;
-    font-size: var(--font-size-md);
-    line-height: 1.4;
-    color: var(--fg);
-    white-space: pre-line;
     overflow: hidden;
-    display: -webkit-box;
-    line-clamp: 2;
-    -webkit-line-clamp: 2;
-    -webkit-box-orient: vertical;
-    word-break: break-word;
+    color: var(--text);
+    font-size: var(--font-size-title);
+    font-weight: 500;
+    line-height: 1.3;
+    letter-spacing: -0.01em;
+    white-space: nowrap;
+    text-overflow: ellipsis;
   }
 
   .meta {
     display: flex;
     align-items: center;
     gap: 5px;
-    margin-top: 2px;
-    font-size: var(--font-size-xs);
-    color: var(--fg-muted);
-  }
-
-  .avatar {
-    display: inline-grid;
-    place-items: center;
-    width: 14px;
-    height: 14px;
-    border-radius: 50%;
-    color: #121019;
-    font-size: 8px;
-    font-weight: 700;
+    margin-top: 1px;
+    overflow: hidden;
+    color: var(--text-2);
+    font-size: var(--font-size-meta);
+    font-weight: 400;
+    white-space: nowrap;
+    font-variant-numeric: tabular-nums;
   }
 
   .source {
-    max-width: 160px;
+    max-width: 140px;
     overflow: hidden;
     text-overflow: ellipsis;
-    white-space: nowrap;
   }
 
   .dot {
@@ -210,23 +183,32 @@
   }
 
   .pin {
-    width: 12px;
-    height: 12px;
+    width: 11px;
+    height: 11px;
+    flex: none;
     color: var(--accent);
   }
 
   .shortcut {
     flex: none;
-    display: grid;
-    place-items: center;
-    min-width: 20px;
-    height: 20px;
-    padding: 0 4px;
-    border: 1px solid var(--control-border);
-    border-radius: 5px;
-    background: var(--control-bg);
-    color: var(--fg-muted);
-    font-family: var(--font-mono);
-    font-size: 10px;
+    min-width: 10px;
+    color: var(--text-2);
+    font-size: var(--font-size-meta);
+    font-variant-numeric: tabular-nums;
+    text-align: right;
+  }
+
+  .row.selected .preview,
+  .row.selected .meta,
+  .row.selected .source,
+  .row.selected .dot,
+  .row.selected .shortcut,
+  .row.selected .kind,
+  .row.selected .pin {
+    color: var(--selection-fg);
+  }
+
+  .row.selected .thumb {
+    box-shadow: 0 0 0 1px rgba(255, 255, 255, 0.25);
   }
 </style>

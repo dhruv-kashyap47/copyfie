@@ -112,46 +112,48 @@
   }
 
   .card {
-    width: min(430px, calc(100% - 48px));
+    width: min(430px, calc(100% - 40px));
     padding: 20px;
-    border: 1px solid var(--control-border);
-    border-radius: var(--radius-well);
-    background: var(--bg-elevated);
-    box-shadow: 0 18px 50px rgb(0 0 0 / 35%);
+    border: 1px solid var(--dialog-border);
+    border-radius: var(--radius-dialog);
+    background: var(--dialog-bg);
+    box-shadow: var(--shadow-dialog);
   }
 
   h2 {
     margin: 0 0 8px;
+    color: var(--text);
     font-size: 15px;
+    font-weight: 600;
+    letter-spacing: -0.01em;
   }
 
   p {
     margin: 0 0 14px;
-    font-size: 12.5px;
-    line-height: 1.55;
-    color: var(--fg-muted);
+    color: var(--text-2);
+    font-size: var(--font-size-body);
+    line-height: 1.5;
   }
 
   kbd {
     padding: 1px 5px;
-    border: 1px solid var(--control-border);
-    border-radius: 5px;
-    background: var(--control-bg);
-    color: var(--fg);
-    font-family: var(--font-mono);
+    border-radius: var(--radius-key);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: var(--font-ui);
     font-size: 11px;
   }
 
   .recorder {
     display: grid;
     place-items: center;
-    min-height: 48px;
+    min-height: 46px;
     margin-bottom: 12px;
-    border: 1px dashed var(--control-border);
-    border-radius: var(--radius-sm);
-    background: var(--field-bg);
-    color: var(--fg);
-    font-family: var(--font-mono);
+    border: 1px dashed var(--separator);
+    border-radius: var(--radius-well);
+    background: var(--surface-2);
+    color: var(--text);
+    font-family: var(--font-ui);
     font-size: 13px;
     cursor: text;
   }
@@ -159,11 +161,11 @@
   .recorder:focus-visible {
     border-color: var(--accent);
     outline: none;
+    box-shadow: 0 0 0 2px var(--focus-ring);
   }
 
   .placeholder {
-    color: var(--fg-muted);
-    font-family: var(--font-ui);
+    color: var(--text-2);
   }
 
   .error {
@@ -173,13 +175,13 @@
 
   button {
     width: 100%;
-    padding: 9px 12px;
+    height: 36px;
     border: none;
-    border-radius: var(--radius-sm);
-    background: var(--fg);
-    color: var(--bg);
-    font-weight: 700;
-    font-size: 12.5px;
+    border-radius: var(--radius-row);
+    background: var(--selection-bg);
+    color: var(--selection-fg);
+    font-size: var(--font-size-body);
+    font-weight: 600;
     cursor: pointer;
     transition: transform var(--dur-press) var(--ease);
   }
@@ -195,6 +197,7 @@
 
   .hint {
     margin: 10px 0 0;
+    color: var(--text-2);
     font-size: 11px;
   }
 </style>

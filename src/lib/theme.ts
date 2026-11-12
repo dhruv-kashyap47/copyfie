@@ -4,13 +4,13 @@
 // (avoiding a flash), then reconcile with Rust. `system` removes `data-theme`
 // so the `prefers-color-scheme` media query in tokens.css applies.
 //
-// The visual accent is curated per theme in tokens.css (champagne in dark,
-// cobalt in light). The stored `accent` value remains only for settings-file
-// compatibility; it no longer overrides the theme accent.
+// The visual accent is the single system blue in tokens.css. The stored
+// `accent` value remains only for settings-file compatibility; it no longer
+// overrides the theme accent.
 
 export type Theme = "system" | "light" | "dark";
 
-export const DEFAULT_ACCENT = "#5B9DFF";
+export const DEFAULT_ACCENT = "#007AFF";
 
 const THEME_KEY = "copyfie.theme";
 const ACCENT_KEY = "copyfie.accent";

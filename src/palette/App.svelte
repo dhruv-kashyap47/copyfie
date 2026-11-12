@@ -406,7 +406,6 @@
 <main class="shell glass-shell">
   <div class="well glass-well">
     <div class="top">
-      <span class="mark" aria-hidden="true">C</span>
       <SearchBar
         bind:query
         {activeDescendant}
@@ -447,7 +446,7 @@
   .shell {
     display: flex;
     height: 100%;
-    padding: 8px;
+    padding: 4px;
     position: relative;
   }
 
@@ -463,22 +462,6 @@
   .top {
     display: flex;
     align-items: center;
-    gap: 10px;
-    padding: 12px 14px 10px;
-  }
-
-  .mark {
-    display: grid;
-    place-items: center;
-    width: 28px;
-    height: 28px;
-    flex: none;
-    border-radius: 9px;
-    background: var(--mark-bg);
-    color: var(--mark-fg);
-    font-size: 15px;
-    font-weight: 800;
-    letter-spacing: -0.03em;
-    box-shadow: inset 0 1px 0 rgb(255 255 255 / 30%);
+    padding: 10px 10px 6px;
   }
 </style>

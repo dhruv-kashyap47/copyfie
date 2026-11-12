@@ -58,6 +58,15 @@ export function sourceInitial(name: string | null): string {
   return value ? value.charAt(0).toUpperCase() : "?";
 }
 
+/** Thumbnail URL for the custom protocol (Windows uses the http host form). */
+export function thumbUrl(name: string): string {
+  const host =
+    typeof navigator !== "undefined" && /Windows/i.test(navigator.userAgent)
+      ? "http://copyfie.localhost"
+      : "copyfie://localhost";
+  return `${host}/${name.replace(/^\/+/, "")}`;
+}
+
 /** True on Apple platforms, where the command key is the modifier. */
 export function isMacPlatform(platform: string): boolean {
   return /Mac|iPhone|iPad/i.test(platform);

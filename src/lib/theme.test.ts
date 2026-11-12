@@ -17,8 +17,8 @@ describe("normalizeTheme", () => {
 
 describe("normalizeAccent", () => {
   it("normalizes hex colors", () => {
-    expect(normalizeAccent("#1e5bd7")).toBe("#1E5BD7");
-    expect(normalizeAccent("1E5BD7")).toBe("#1E5BD7");
+    expect(normalizeAccent("#007aff")).toBe("#007AFF");
+    expect(normalizeAccent("007AFF")).toBe("#007AFF");
     expect(normalizeAccent("  #aabbcc  ")).toBe("#AABBCC");
   });
 

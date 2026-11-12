@@ -29,30 +29,30 @@
   .filters {
     display: flex;
     gap: 2px;
-    margin: 0 14px 8px;
-    padding: 3px;
+    margin: 0 10px 6px;
+    padding: 2px;
   }
 
   button {
     flex: 1;
-    padding: 5px 8px;
+    height: 26px;
+    padding: 0 8px;
     border: none;
-    border-radius: 7px;
+    border-radius: 6px;
     background: transparent;
-    color: var(--fg-muted);
-    font-size: var(--font-size-xs);
-    font-weight: 600;
+    color: var(--text-2);
+    font-size: var(--font-size-filter);
+    font-weight: 500;
     cursor: pointer;
   }
 
   button:hover {
-    background: var(--control-hover);
-    color: var(--fg);
+    color: var(--text);
   }
 
   button.active {
-    background: var(--row-selected);
-    color: var(--fg);
-    box-shadow: inset 0 0 0 1px var(--row-selected-border);
+    background: var(--seg-selected);
+    color: var(--seg-selected-text);
+    box-shadow: var(--shadow-seg);
   }
 </style>

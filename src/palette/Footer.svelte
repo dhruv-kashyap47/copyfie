@@ -1,4 +1,6 @@
 <script lang="ts">
+  import { isMacPlatform } from "../lib/format";
+
   let {
     count,
     toast,
@@ -8,6 +10,10 @@
     toast: string | null;
     modifier: string;
   } = $props();
+
+  const mac = isMacPlatform(typeof navigator !== "undefined" ? (navigator.platform ?? "") : "");
+  const pasteKey = mac ? "↵" : "Enter";
+  const closeKey = mac ? "⎋" : "Esc";
 </script>
 
 <footer>
@@ -15,15 +21,13 @@
     <span class="toast glass-toast toast-in" role="status">{toast}</span>
   {:else}
     <span class="hints">
-      <kbd>↑</kbd><kbd>↓</kbd> navigate
-      <span class="sep">·</span>
-      <kbd>Enter</kbd> paste
+      <kbd>{pasteKey}</kbd> paste
       <span class="sep">·</span>
       <kbd>{modifier}+P</kbd> pin
       <span class="sep">·</span>
       <kbd>Tab</kbd> filter
       <span class="sep">·</span>
-      <kbd>Esc</kbd> close
+      <kbd>{closeKey}</kbd>
     </span>
   {/if}
   <span class="count">{count} item{count === 1 ? "" : "s"}</span>
@@ -35,40 +39,44 @@
     align-items: center;
     justify-content: space-between;
     gap: 12px;
-    padding: 8px 14px;
-    border-top: 1px solid var(--well-border);
-    font-size: var(--font-size-xs);
-    color: var(--fg-muted);
+    padding: 8px 12px;
+    border-top: 1px solid var(--separator);
+    color: var(--text-2);
+    font-size: var(--font-size-footer);
+    font-weight: 400;
   }
 
   .hints {
     display: flex;
     align-items: center;
-    gap: 5px;
+    gap: 4px;
     overflow: hidden;
     white-space: nowrap;
   }
 
   .sep {
-    opacity: 0.5;
+    opacity: 0.6;
   }
 
   kbd {
-    padding: 1px 4px;
-    border: 1px solid var(--control-border);
-    border-radius: 4px;
-    background: var(--control-bg);
-    color: var(--fg);
-    font-family: var(--font-mono);
-    font-size: 9.5px;
+    padding: 1px 5px;
+    border-radius: var(--radius-key);
+    background: var(--surface-2);
+    color: var(--text-2);
+    font-family: var(--font-ui);
+    font-size: 10px;
+    line-height: 1.4;
   }
 
   .toast {
     padding: 3px 8px;
-    font-weight: 600;
+    color: var(--toast-text);
+    font-size: var(--font-size-meta);
+    font-weight: 500;
   }
 
   .count {
     flex: none;
+    font-variant-numeric: tabular-nums;
   }
 </style>

@@ -36,8 +36,8 @@
 <div id="results" class="list" role="listbox" aria-label="Clipboard history">
   {#if status === "error"}
     <div class="state">
-      <p class="title">Could not load history</p>
-      <p class="detail">{errorMessage ?? "The store did not respond."}</p>
+      <p class="state-line">Could not load history</p>
+      <p class="state-hint">{errorMessage ?? "The store did not respond."}</p>
       <button type="button" class="glass-control pressable" onclick={onRetry}>Try again</button>
     </div>
   {:else if status === "loading"}
@@ -47,11 +47,11 @@
   {:else if items.length === 0}
     <div class="state">
       {#if query.trim()}
-        <p class="title">No matches</p>
-        <p class="detail">Nothing in your history matches “{query.trim()}”.</p>
+        <p class="state-line">No matches for “{query.trim()}”.</p>
+        <p class="state-hint">Try a different search.</p>
       {:else}
-        <p class="title">No clipboard history yet</p>
-        <p class="detail">Copy some text and it will appear here.</p>
+        <p class="state-line">No clipboard history yet.</p>
+        <p class="state-hint">Copy something and it will appear here.</p>
       {/if}
     </div>
   {:else}
@@ -77,18 +77,29 @@
     display: flex;
     flex-direction: column;
     gap: 2px;
+    overscroll-behavior: contain;
     scrollbar-width: thin;
-    scrollbar-color: var(--control-border) transparent;
+    scrollbar-color: transparent transparent;
+  }
+
+  .list:hover {
+    scrollbar-color: var(--scroll-thumb) transparent;
   }
 
   .list::-webkit-scrollbar {
-    width: 10px;
+    width: 8px;
   }
 
   .list::-webkit-scrollbar-thumb {
-    background: var(--control-border);
-    border: 3px solid transparent;
+    background: transparent;
+    border: 2px solid transparent;
     border-radius: 999px;
+    background-clip: content-box;
+  }
+
+  .list:hover::-webkit-scrollbar-thumb {
+    background: var(--scroll-thumb);
+    border: 2px solid transparent;
     background-clip: content-box;
   }
 
@@ -98,31 +109,32 @@
     text-align: center;
   }
 
-  .title {
+  .state-line {
     margin: 0;
-    font-size: var(--font-size-md);
-    font-weight: 600;
+    color: var(--text-2);
+    font-size: var(--font-size-title);
+    font-weight: 500;
   }
 
-  .detail {
-    margin: 6px 0 0;
-    font-size: var(--font-size-sm);
-    color: var(--fg-muted);
-    line-height: 1.5;
+  .state-hint {
+    margin: 4px 0 0;
+    color: var(--text-2);
+    font-size: var(--font-size-meta);
+    font-weight: 400;
   }
 
   .state button {
     margin-top: 12px;
-    padding: 6px 12px;
-    font-size: var(--font-size-sm);
+    padding: 6px 10px;
+    font-size: var(--font-size-meta);
     cursor: pointer;
   }
 
   .skeleton {
-    height: 44px;
-    margin: 4px 2px;
-    border: 1px solid var(--control-border);
+    flex: none;
+    height: var(--row-height);
+    margin: 0 2px;
     border-radius: var(--radius-row);
-    background: var(--control-bg);
+    background: var(--surface-2);
   }
 </style>

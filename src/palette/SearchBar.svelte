@@ -27,7 +27,7 @@
     viewBox="0 0 24 24"
     fill="none"
     stroke="currentColor"
-    stroke-width="2"
+    stroke-width="1.5"
     stroke-linecap="round"
     stroke-linejoin="round"
     aria-hidden="true"
@@ -45,7 +45,7 @@
     aria-activedescendant={activeDescendant}
     aria-label="Search clipboard history"
     aria-autocomplete="list"
-    placeholder="Search clipboard history"
+    placeholder="Search"
     autocomplete="off"
     autocapitalize="off"
     spellcheck="false"
@@ -54,12 +54,12 @@
   />
 
   {#if query.length > 0}
-    <button type="button" class="clear glass-control pressable" aria-label="Clear search" onclick={clear}>
+    <button type="button" class="clear" aria-label="Clear search" onclick={clear}>
       <svg
         viewBox="0 0 24 24"
         fill="none"
         stroke="currentColor"
-        stroke-width="2"
+        stroke-width="1.5"
         stroke-linecap="round"
         stroke-linejoin="round"
         aria-hidden="true"
@@ -77,19 +77,19 @@
     gap: 8px;
     flex: 1;
     min-width: 0;
-    padding: 7px 7px 7px 10px;
+    height: 40px;
+    padding: 0 10px;
   }
 
   .search-field:focus-within {
-    border-color: var(--focus);
-    box-shadow: 0 0 0 1px var(--focus);
+    box-shadow: 0 0 0 2px var(--focus-ring);
   }
 
   .icon {
     width: 16px;
     height: 16px;
     flex: none;
-    color: var(--fg-subtle);
+    color: var(--text-2);
   }
 
   input {
@@ -99,34 +99,38 @@
     background: transparent;
     border: none;
     outline: none;
-    color: var(--fg);
-    font-size: var(--font-size-lg);
+    color: var(--text);
+    font-size: var(--font-size-search);
+    font-weight: 400;
+    caret-color: var(--accent);
     user-select: text;
     cursor: text;
   }
 
   input::placeholder {
-    color: var(--fg-subtle);
+    color: var(--text-2);
   }
 
   .clear {
     display: grid;
     place-items: center;
-    width: 22px;
-    height: 22px;
+    width: 20px;
+    height: 20px;
     flex: none;
     padding: 0;
-    border-radius: 6px;
-    color: var(--fg-muted);
+    border: none;
+    border-radius: 50%;
+    background: transparent;
+    color: var(--text-2);
     cursor: pointer;
   }
 
   .clear:hover {
-    color: var(--fg);
+    color: var(--text);
   }
 
   .clear svg {
-    width: 12px;
-    height: 12px;
+    width: 14px;
+    height: 14px;
   }
 </style>

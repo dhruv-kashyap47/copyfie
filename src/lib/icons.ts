@@ -7,7 +7,6 @@
 export const icons = {
   search: '<path d="m21 21-4.34-4.34" /><circle cx="11" cy="11" r="8" />',
   x: '<path d="M18 6 6 18" /><path d="m6 6 12 12" />',
-  text: '<path d="M21 5H3" /><path d="M15 12H3" /><path d="M17 19H3" />',
   image:
     '<rect width="18" height="18" x="3" y="3" rx="2" ry="2" /><circle cx="9" cy="9" r="2" /><path d="m21 15-3.086-3.086a2 2 0 0 0-2.828 0L6 21" />',
   files:
