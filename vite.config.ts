@@ -17,6 +17,12 @@ export default defineConfig({
     target: ["chrome105", "safari15"],
     sourcemap: false,
     reportCompressedSize: true,
+    rollupOptions: {
+      input: {
+        palette: "index.html",
+        settings: "settings.html",
+      },
+    },
   },
   test: {
     // Tests arrive with the palette/search tasks; keep the skeleton green.

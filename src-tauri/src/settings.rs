@@ -16,6 +16,9 @@ use serde::{Deserialize, Serialize};
 use serde_json::{Map, Value};
 
 pub const DEFAULT_HOTKEY: &str = "CommandOrControl+Shift+Space";
+pub const DEFAULT_THEME: &str = "system";
+pub const DEFAULT_ACCENT: &str = "#9D86FF";
+pub const DEFAULT_RETENTION_DAYS: u32 = 30;
 
 #[derive(Debug, Clone, Serialize, Deserialize)]
 pub struct Settings {
@@ -23,6 +26,15 @@ pub struct Settings {
     pub version: u32,
     #[serde(default = "default_hotkey")]
     pub hotkey: String,
+    #[serde(default = "default_theme")]
+    pub theme: String,
+    #[serde(default = "default_accent")]
+    pub accent: String,
+    /// 0 means "Forever".
+    #[serde(default = "default_retention")]
+    pub retention_days: u32,
+    #[serde(default)]
+    pub capture_paused: bool,
     /// Fields owned by other/newer builds.
     #[serde(flatten)]
     pub extra: Map<String, Value>,
@@ -33,8 +45,44 @@ impl Default for Settings {
         Self {
             version: 1,
             hotkey: DEFAULT_HOTKEY.to_string(),
+            theme: DEFAULT_THEME.to_string(),
+            accent: DEFAULT_ACCENT.to_string(),
+            retention_days: DEFAULT_RETENTION_DAYS,
+            capture_paused: false,
             extra: Map::new(),
         }
+    }
+}
+
+impl Settings {
+    /// Clamp and validate values that come from disk or IPC.
+    pub fn sanitized(mut self) -> Self {
+        self.theme = match self.theme.trim().to_ascii_lowercase().as_str() {
+            "light" => "light".to_string(),
+            "dark" => "dark".to_string(),
+            _ => DEFAULT_THEME.to_string(),
+        };
+        self.accent = normalize_accent(&self.accent);
+        self.retention_days = if self.retention_days == 0 {
+            0
+        } else {
+            self.retention_days.clamp(1, 365)
+        };
+        self.hotkey = self.hotkey.trim().to_string();
+        if self.hotkey.is_empty() {
+            self.hotkey = DEFAULT_HOTKEY.to_string();
+        }
+        self
+    }
+}
+
+fn normalize_accent(value: &str) -> String {
+    let trimmed = value.trim();
+    let hex = trimmed.strip_prefix('#').unwrap_or(trimmed);
+    if hex.len() == 6 && hex.chars().all(|character| character.is_ascii_hexdigit()) {
+        format!("#{}", hex.to_ascii_uppercase())
+    } else {
+        DEFAULT_ACCENT.to_string()
     }
 }
 
@@ -44,6 +92,18 @@ fn default_version() -> u32 {
 
 fn default_hotkey() -> String {
     DEFAULT_HOTKEY.to_string()
+}
+
+fn default_theme() -> String {
+    DEFAULT_THEME.to_string()
+}
+
+fn default_accent() -> String {
+    DEFAULT_ACCENT.to_string()
+}
+
+fn default_retention() -> u32 {
+    DEFAULT_RETENTION_DAYS
 }
 
 /// Plans do not need a settings directory abstraction: everything lives next to
@@ -83,7 +143,8 @@ impl SettingsStore {
     }
 
     pub fn save(&self, settings: &Settings) -> Result<(), String> {
-        let json = serde_json::to_string_pretty(settings)
+        let settings = settings.clone().sanitized();
+        let json = serde_json::to_string_pretty(&settings)
             .map_err(|error| format!("could not serialize settings: {error}"))?;
 
         if let Some(parent) = self.path.parent() {
@@ -148,12 +209,12 @@ mod tests {
         };
         settings
             .extra
-            .insert("retention_days".to_string(), json!(90));
+            .insert("future_setting".to_string(), json!(true));
 
         store.save(&settings).expect("save");
         let loaded = store.load();
         assert_eq!(loaded.hotkey, "CommandOrControl+Shift+F9");
-        assert_eq!(loaded.extra.get("retention_days"), Some(&json!(90)));
+        assert_eq!(loaded.extra.get("future_setting"), Some(&json!(true)));
     }
 
     #[test]
@@ -189,13 +250,54 @@ mod tests {
     fn save_hotkey_keeps_other_values() {
         let (_dir, store) = store();
         let mut settings = Settings::default();
-        settings.extra.insert("theme".to_string(), json!("dark"));
+        settings.extra.insert("blocklist".to_string(), json!([]));
         store.save(&settings).expect("save");
 
         store
             .save_hotkey("CommandOrControl+Alt+Space")
             .expect("save hotkey");
         let loaded = store.load();
-        assert_eq!(loaded.extra.get("theme"), Some(&json!("dark")));
+        assert_eq!(loaded.extra.get("blocklist"), Some(&json!([])));
+    }
+
+    #[test]
+    fn sanitizes_theme_accent_and_retention() {
+        let settings = Settings {
+            theme: "LIGHT".to_string(),
+            accent: " 5b3df0 ".to_string(),
+            retention_days: 9_999,
+            ..Settings::default()
+        }
+        .sanitized();
+        assert_eq!(settings.theme, "light");
+        assert_eq!(settings.accent, "#5B3DF0");
+        assert_eq!(settings.retention_days, 365);
+
+        let fallback = Settings {
+            theme: "neon".to_string(),
+            accent: "not-a-color".to_string(),
+            retention_days: 0,
+            ..Settings::default()
+        }
+        .sanitized();
+        assert_eq!(fallback.theme, "system");
+        assert_eq!(fallback.accent, DEFAULT_ACCENT);
+        assert_eq!(fallback.retention_days, 0);
+    }
+
+    #[test]
+    fn save_applies_sanitization() {
+        let (dir, store) = store();
+        store
+            .save(&Settings {
+                theme: "garbage".to_string(),
+                accent: "#zzzzzz".to_string(),
+                ..Settings::default()
+            })
+            .expect("save");
+
+        let text = fs::read_to_string(dir.path().join("settings.json")).expect("read");
+        assert!(text.contains("\"theme\": \"system\""));
+        assert!(text.contains(DEFAULT_ACCENT));
     }
 }

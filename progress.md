@@ -492,3 +492,59 @@ PLAN §7 lists `Ctrl+P`/`Ctrl+N` as arrow alternatives and also `Cmd/Ctrl+P` as 
 ### Next up
 
 - **M1-10** — minimal settings + theme: full settings window/tab, hotkey recorder in settings, history length, launch at login, pause, theme tokens, About.
+
+---
+
+## 2026-11-12 — Session 11 (Milestone 1, M1-10)
+
+**Scope:** M1-10 — minimal settings window and theme.
+
+### Done
+
+- **Settings model:** `Settings` now carries `theme` (`system|light|dark`), `accent`, `retention_days` (`0` = Forever), and `capture_paused`, alongside the hotkey. `sanitized()` validates theme, `#RRGGBB` accent, and retention (0 or 1–365); unknown fields are still preserved. Six unit tests.
+- **Commands:** `settings_get`, `settings_save` (transactional hotkey registration first, then persist, autostart, capture config, window themes, and a `settings:changed` event), plus the existing hotkey commands.
+- **Lazy settings window:** created on demand from `open_settings` (async command), destroyed on close, recreated later. 560×640, native decorations, theme-matched titlebar. Palette hides only after the window exists.
+- **Multi-page frontend:** `settings.html` + `src/settings/` entry, Vite `rollupOptions.input`, a separate `settings.css` (scrollable/selectable, unlike the palette).
+- **Settings UI:** Appearance (theme segmented control, accent picker), History (retention, pause), Shortcut (recorder + apply), Startup (launch at login), About (version/privacy/attribution). Every change saves immediately; failures revert to persisted values via `settings_get`.
+- **Theme:** `theme.ts` applies cached theme/accent before mount (no flash), Rust reconciles, and `settings:changed` updates the palette live. `system` removes `data-theme` so `prefers-color-scheme` applies.
+- **Integration:** `Cmd/Ctrl+,` opens settings; the tray has a **Settings…** item; startup applies persisted retention/pause to the capture config.
+
+### Two real bugs found and fixed
+
+1. **WebView2 `HRESULT 0x8007139F` (ERROR_INVALID_STATE) on the second webview.** WebView2 shares one environment per data directory, and its **browser arguments must match** across webviews. The palette sets throttling flags in `tauri.conf.json`; the runtime-created settings window had none. Applying the same `additionalBrowserArgs` to the settings builder fixed creation.
+2. **Synchronous `open_settings` deadlocked** at `WebviewWindowBuilder::build()` (the command blocks the thread that must service window creation). Made the command `async`; the tray path spawns a worker thread.
+
+### Verification
+
+- `Ctrl+,` opens the settings window and focuses it; UIA exposes Appearance/History/Shortcut/Startup/About.
+- **Theme:** clicked **Light** → `settings.json` `"theme": "light"`, both windows repainted light (screenshots), persisted across a full restart (palette light before any interaction).
+- **Retention:** set 7 days → `settings.json` `"retention_days": 7`; a new capture stored after the change has `expires_at − captured_at = 7.0` days. Older rows keep 30 days; the pinned row is `never`.
+- **Pause:** enabling it saved `capture_paused: true`; copying a unique string while paused left the row count at 3. Disabling and copying added the row (4).
+- **Lifetime:** closing the settings window destroyed it; `Ctrl+,` recreated it successfully.
+- **Reset:** returned to defaults (system theme, 30 days, unpaused, default shortcut) after testing.
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `cargo test --workspace` (14 suites), `npm run check`, `npm test` (**33**), `npm run build`, `cargo deny` → all clean. Bundle: **31.3 KB gz** (two pages, 50 KB budget).
+
+### Decisions
+
+- **Autostart truth is the OS plugin**, not `settings.json`; the view reports `is_enabled()` and `settings_save` toggles it. Avoids drift.
+- **Retention affects new captures only**; existing rows keep the expiry computed when captured. Pinned rows stay `NULL`.
+- **Theme cache is local (localStorage) for paint, Rust is authoritative.** The cache is updated on every save and on every `settings:changed`.
+- **Settings changes are immediate** (no Save button); failed saves revert the form.
+- **Accent is validated server-side** to `#RRGGBB`; invalid values fall back to the default.
+- **Tray check items are not yet synchronized** when pause/autostart change in Settings; they update when toggled from the tray. M2-09 should unify this.
+
+### Measurements
+
+- Frontend: palette 6.2 KB gz, settings 2.7 KB gz, shared chunk 19.7 KB gz, CSS included → **31.3 KB total** vs 50 KB budget.
+- No RSS measurement yet (M1-12).
+
+### Notes / follow-ups
+
+- The settings hotkey recorder is wired to the same save path as the overlay; the overlay rebind was verified end-to-end, the settings recorder only by code/unit tests.
+- `prefers-color-scheme` live OS switching was not exercised; static system/light/dark were.
+- Settings window is fixed-size; revisit if translations or accessibility scaling need more room.
+- Test history now includes four rows (one pinned, one with 7-day retention); leave or clear via Settings when desired.
+
+### Next up
+
+- **M1-11** — perf harness, 10k fixture, baseline report.

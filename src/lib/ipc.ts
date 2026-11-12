@@ -67,6 +67,38 @@ export function setHotkey(accelerator: string): Promise<HotkeyStatus> {
   return invoke<HotkeyStatus>("set_hotkey", { accelerator });
 }
 
+export interface SettingsView {
+  appVersion: string;
+  theme: string;
+  accent: string;
+  retentionDays: number;
+  capturePaused: boolean;
+  launchAtLogin: boolean;
+  hotkey: string;
+  hotkeyRegistered: boolean;
+}
+
+export interface SettingsInput {
+  theme: string;
+  accent: string;
+  retentionDays: number;
+  capturePaused: boolean;
+  launchAtLogin: boolean;
+  hotkey: string;
+}
+
+export function settingsGet(): Promise<SettingsView> {
+  return invoke<SettingsView>("settings_get");
+}
+
+export function settingsSave(input: SettingsInput): Promise<SettingsView> {
+  return invoke<SettingsView>("settings_save", { input });
+}
+
+export function openSettings(): Promise<void> {
+  return invoke<void>("open_settings");
+}
+
 export function hidePalette(): Promise<void> {
   return invoke<void>("hide_palette");
 }

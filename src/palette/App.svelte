@@ -7,14 +7,17 @@
     hidePalette,
     hotkeyStatus as fetchHotkeyStatus,
     listHistory,
+    openSettings,
     pasteItem,
     pinItem,
     searchHistory,
+    settingsGet,
     type HotkeyStatus,
   } from "../lib/ipc";
   import { filterItems } from "../lib/localSearch";
   import { mapKey, moveSelection } from "../lib/keymap";
   import { modifierLabel } from "../lib/format";
+  import { applyTheme, cacheTheme } from "../lib/theme";
   import { FILTERS, kindForFilter, type Filter, type ItemSummary } from "../lib/types";
 
   import FilterBar from "./FilterBar.svelte";
@@ -95,6 +98,16 @@
     }
   }
 
+  async function refreshTheme() {
+    try {
+      const settings = await settingsGet();
+      applyTheme(settings.theme, settings.accent);
+      cacheTheme(settings.theme, settings.accent);
+    } catch {
+      // The cached theme is already painted; this is a reconciliation pass.
+    }
+  }
+
   async function runSearch() {
     const term = query.trim();
     if (term.length === 0) {
@@ -156,6 +169,7 @@
   onMount(() => {
     void refresh();
     void refreshHotkey();
+    void refreshTheme();
 
     const focusInput = () => {
       document.getElementById("search-input")?.focus();
@@ -166,6 +180,7 @@
     let disposed = false;
     let unlisten: (() => void) | undefined;
     let unlistenOpen: (() => void) | undefined;
+    let unlistenTheme: (() => void) | undefined;
     let unlistenWindowFocus: (() => void) | undefined;
 
     listen("history:changed", () => {
@@ -200,6 +215,17 @@
       }
     });
 
+    listen<{ theme: string; accent: string }>("settings:changed", (event) => {
+      applyTheme(event.payload.theme, event.payload.accent);
+      cacheTheme(event.payload.theme, event.payload.accent);
+    }).then((stop) => {
+      if (disposed) {
+        stop();
+      } else {
+        unlistenTheme = stop;
+      }
+    });
+
     const onWindowFocus = () => {
       document.getElementById("search-input")?.focus();
     };
@@ -212,6 +238,7 @@
       disposed = true;
       unlisten?.();
       unlistenOpen?.();
+      unlistenTheme?.();
       unlistenWindowFocus?.();
       window.removeEventListener("keydown", onKeydown, true);
       if (toastTimer) {
@@ -336,7 +363,7 @@
         void hidePalette();
         break;
       case "settings":
-        showToast("Settings arrive in M1-10");
+        openSettings().catch((cause) => showToast(`settings failed: ${describe(cause)}`));
         break;
       case "block":
         showToast("App blocking arrives in M2-08");

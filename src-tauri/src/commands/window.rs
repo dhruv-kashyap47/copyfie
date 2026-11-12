@@ -30,6 +30,91 @@ pub fn palette_show(app: AppHandle) -> Result<(), String> {
     show_palette(&app)
 }
 
+/// Open (or focus) the lazily created settings window.
+///
+/// Async on purpose: WebView2 window creation must run off the main thread and
+/// dispatch to the event loop. A synchronous command deadlocks here.
+#[tauri::command]
+pub async fn open_settings(app: AppHandle) -> Result<(), String> {
+    show_settings(&app)
+}
+
+pub fn show_settings(app: &AppHandle) -> Result<(), String> {
+    log::info!(target: "copyfie::window", "opening settings window");
+    let existing = app.get_webview_window("settings");
+
+    let window = match existing {
+        Some(window) => window,
+        None => {
+            let theme = app
+                .try_state::<crate::state::AppState>()
+                .map(|state| state.settings.load().theme)
+                .unwrap_or_else(|| "system".to_string());
+
+            let window_theme = match theme.as_str() {
+                "light" => Some(tauri::Theme::Light),
+                "dark" => Some(tauri::Theme::Dark),
+                _ => None,
+            };
+
+            let builder = tauri::WebviewWindowBuilder::new(
+                app,
+                "settings",
+                tauri::WebviewUrl::App("settings.html".into()),
+            )
+            .title("Copyfie Settings")
+            .inner_size(560.0, 640.0)
+            .resizable(false)
+            .center()
+            .theme(window_theme)
+            .on_page_load(|_webview, payload| {
+                log::info!(
+                    target: "copyfie::window",
+                    "settings page {} ({:?})",
+                    payload.url(),
+                    payload.event()
+                );
+            });
+
+            // WebView2 shares one environment per data directory. Its browser
+            // arguments must match the palette's, or creating a second webview
+            // fails with HRESULT 0x8007139F (ERROR_INVALID_STATE).
+            #[cfg(target_os = "windows")]
+            let builder = builder.additional_browser_args(
+                "--disable-background-timer-throttling \
+                 --disable-renderer-backgrounding \
+                 --disable-backgrounding-occluded-windows",
+            );
+
+            let window = builder.build().map_err(|error| {
+                log::error!(
+                    target: "copyfie::window",
+                    "could not create the settings window: {error}"
+                );
+                error.to_string()
+            })?;
+
+            log::info!(
+                target: "copyfie::window",
+                "settings window url={:?}",
+                window.url().map(|url| url.to_string())
+            );
+
+            window
+        }
+    };
+
+    // Hide the palette only after the settings window exists.
+    if let Some(palette) = app.get_webview_window("main") {
+        let _ = palette.hide();
+    }
+
+    window.show().map_err(|error| error.to_string())?;
+    force_foreground(&window)?;
+
+    Ok(())
+}
+
 /// Position, show, focus, and notify the palette.
 pub fn show_palette(app: &AppHandle) -> Result<(), String> {
     let window = app

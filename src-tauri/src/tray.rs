@@ -14,6 +14,7 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
     let login_enabled = app.autolaunch().is_enabled().unwrap_or(false);
 
     let show = MenuItemBuilder::with_id("show", "Show palette").build(app)?;
+    let settings = MenuItemBuilder::with_id("settings", "Settings…").build(app)?;
     let pause = CheckMenuItemBuilder::with_id("pause", "Pause capture")
         .checked(paused)
         .build(app)?;
@@ -24,6 +25,7 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
 
     let menu = MenuBuilder::new(app)
         .item(&show)
+        .item(&settings)
         .item(&pause)
         .item(&login)
         .separator()
@@ -40,6 +42,13 @@ pub fn install(app: &AppHandle) -> tauri::Result<()> {
         .on_menu_event(move |app, event| match event.id().as_ref() {
             "show" => {
                 let _ = crate::commands::window::show_palette(app);
+            }
+            "settings" => {
+                // Window creation must not run on the main thread.
+                let app = app.clone();
+                std::thread::spawn(move || {
+                    let _ = crate::commands::window::show_settings(&app);
+                });
             }
             "pause" => {
                 let paused = toggle_pause(app);

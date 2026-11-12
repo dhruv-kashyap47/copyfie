@@ -68,8 +68,11 @@ pub fn run() {
             commands::paste::paste_item,
             commands::settings::hotkey_status,
             commands::settings::set_hotkey,
+            commands::settings::settings_get,
+            commands::settings::settings_save,
             commands::window::hide_palette,
             commands::window::palette_show,
+            commands::window::open_settings,
         ])
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
@@ -82,7 +85,12 @@ pub fn run() {
             let database = copyfie_core::Database::open(data_dir.join("clipboard.db"))?;
             let store = StoreHandle::spawn(database);
 
-            let config = Arc::new(RwLock::new(CaptureConfig::default()));
+            let capture_config = CaptureConfig {
+                retention: copyfie_core::Retention::from_days(settings.retention_days),
+                paused: settings.capture_paused,
+                ..CaptureConfig::default()
+            };
+            let config = Arc::new(RwLock::new(capture_config));
             let suppressor = Arc::new(Suppressor::new());
             capture::spawn_capture(
                 app.handle().clone(),

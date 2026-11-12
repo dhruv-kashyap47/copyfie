@@ -47,6 +47,22 @@ lands in M1-09; this is intentional pre-warm behaviour, not a failed launch.
 - Launch at login is **off by default**; the tray menu toggles it.
 - A second launch forwards to the running instance and reveals the palette.
 
+### Settings
+
+Open with `Cmd/Ctrl+,` or **Tray → Settings…**.
+
+- **Appearance:** theme (System / Light / Dark) and accent color, applied live to
+  both windows and cached for instant paint.
+- **History:** retention (7/30/90/365 days or Forever; default 30) and pause
+  capture. Retention applies to newly captured items; pinned items never expire.
+- **Shortcut:** record a replacement global shortcut. A conflicting chord is
+  rejected and the previous shortcut stays active.
+- **Startup:** launch at login.
+- **About:** version, privacy statement, and attribution.
+
+Settings live in `settings.json` in the app data directory. Unknown fields are
+preserved and the file is written atomically with a `.bak` copy.
+
 Rust:
 
 ```sh
