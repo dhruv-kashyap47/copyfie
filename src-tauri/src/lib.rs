@@ -4,31 +4,41 @@
 //! two webviews together. Business logic lives in `copyfie-core`; OS-specific
 //! code lives under `platform/`. Keep this crate thin.
 
-use serde::Serialize;
+mod commands;
+mod state;
+mod store;
+mod thumbs;
 
-#[derive(Debug, Serialize)]
-#[serde(rename_all = "camelCase")]
-struct AppInfo {
-    name: &'static str,
-    version: &'static str,
-    core_version: &'static str,
-    identifier: &'static str,
-}
+use tauri::Manager;
 
-/// Metadata for the hello screen and, later, About → Diagnostics.
-#[tauri::command]
-fn app_info() -> AppInfo {
-    AppInfo {
-        name: "Copyfie",
-        version: env!("CARGO_PKG_VERSION"),
-        core_version: copyfie_core::VERSION,
-        identifier: "com.copyfie.app",
-    }
-}
+use state::AppState;
+use store::StoreHandle;
 
 pub fn run() {
-    tauri::Builder::default()
-        .invoke_handler(tauri::generate_handler![app_info])
+    let builder = tauri::Builder::default()
+        .invoke_handler(tauri::generate_handler![
+            commands::app_info,
+            commands::history::store_stats,
+        ])
+        .setup(|app| {
+            let data_dir = app.path().app_data_dir()?;
+            std::fs::create_dir_all(&data_dir)?;
+            std::fs::create_dir_all(data_dir.join(thumbs::THUMBS_DIR))?;
+
+            let database = copyfie_core::Database::open(data_dir.join("clipboard.db"))?;
+            app.manage(AppState::new(StoreHandle::spawn(database)));
+            Ok(())
+        })
+        // Content-addressed thumbnails: copyfie://<hash>.png (macOS/Linux) and
+        // http://copyfie.localhost/<hash>.png (Windows).
+        .register_uri_scheme_protocol("copyfie", |ctx, request| {
+            match ctx.app_handle().path().app_data_dir() {
+                Ok(dir) => thumbs::serve(&dir.join(thumbs::THUMBS_DIR), &request),
+                Err(_) => thumbs::unavailable(),
+            }
+        });
+
+    builder
         .run(tauri::generate_context!())
         .expect("error while running Copyfie");
 }

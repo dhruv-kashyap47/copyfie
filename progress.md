@@ -136,3 +136,49 @@
 ### Next up
 
 - **M1-03** — store actor + custom URI protocol for thumbnails (stub).
+
+---
+
+## 2026-11-12 — Session 4 (Milestone 1, M1-03)
+
+**Scope:** M1-03 — store actor + custom URI protocol for thumbnails (stub).
+
+### Done
+
+- **Store actor (`src-tauri/src/store/mod.rs`):** one dedicated `copyfie-store` thread owns the `Database`. Cloneable `StoreHandle` sends boxed closures over an `mpsc` channel and awaits `tokio::sync::oneshot` replies, so there is no `Mutex<Connection>` and no blocking of the async runtime. `ActorError::{Stopped, Store}` keeps SQLite failures typed.
+- **App wiring:** `setup` resolves `app_data_dir()`, creates the data root and `thumbs/`, opens `clipboard.db` (migrations run), and manages `AppState` with the actor handle.
+- **Thumbnail protocol (`src-tauri/src/thumbs.rs`):** `copyfie://localhost/<64-hex>.png` plus the Windows `http://copyfie.localhost/...` form. Strict lowercase-hex key validation (no path traversal possible), `image/png`, `Cache-Control: public, max-age=31536000, immutable`, `X-Content-Type-Options: nosniff`, typed 400/404/500 responses. Images themselves are M2-04; the URL contract and caching are settled now.
+- **Commands:** `app_info` (moved into `commands/mod.rs`) and `store_stats` (`commands/history.rs`) prove the actor end-to-end from the webview.
+- **Hello screen:** now shows store counts through the actor.
+- **CSP:** added `http://copyfie.localhost` to `img-src` (Windows custom-protocol origin) in both prod and dev policies.
+
+### Decisions
+
+- **Actor lives in `src-tauri`, not `copyfie-core`.** Core stays a synchronous, thread-agnostic library; the shell owns threads and async glue (matches PLAN §3/§4).
+- **Closure-based job queue** instead of a large request enum. Commands stay a few lines and the queue does not grow into a god-enum; the single thread still serializes every operation.
+- **Thumbnails resolve the data dir per request via `PathResolver`**, so the protocol handler needs no captured state and avoids any setup/webview ordering hazard. Tauri caches base dirs.
+- **`AppState.data_dir` deferred** until the capture pipeline (M1-04) consumes it, keeping `-D warnings` clean.
+- **Content-addressed thumbnails are immutable for a year**, so the cache header is safe even during dev hot reload.
+
+### Verification
+
+- `cargo test -p copyfie` → **10 passed** (actor serialization/concurrency/error recovery; thumbnail validation, serving, Windows URL form, 404s).
+- `cargo test --workspace` → **48 passed** total.
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings` → clean.
+- `cargo deny --config scripts/license/cargo-deny.toml check` → advisories, bans, licenses, sources all ok.
+- Built and launched `target/debug/copyfie.exe`: the window showed **Store 0 items · 0 text · 0 image · 0 files**, and `%APPDATA%\com.copyfie.app\` contained `clipboard.db` (WAL) plus `thumbs/`.
+
+### Measurements
+
+- Actor test suite: 0.01 s. First-run data dir: `clipboard.db` 4 KB + 53 KB WAL at schema v3.
+- No RSS measurement yet (M1-12).
+
+### Notes / follow-ups
+
+- The store thread exits when the last `StoreHandle` drops at process exit; add an explicit flush/shutdown at M1-13 if needed.
+- `store_stats` is temporary diagnostics; real history commands arrive at M1-06.
+- Screenshot check showed square corners on the frameless Windows window — DWM rounding is scheduled in M1-07.
+
+### Next up
+
+- **M1-04** — capture pipeline: privacy gate, text capture, source app, suppression, coalesced `history:changed`.

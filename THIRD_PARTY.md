@@ -51,6 +51,7 @@ copy of this file.
 | `rusqlite` | MIT | SQLite bindings (bundles public-domain SQLite + FTS5) |
 | `blake3` | CC0-1.0 OR Apache-2.0 | Content hashing and dedupe identity |
 | `thiserror` | MIT OR Apache-2.0 | Error types |
+| `tokio` | MIT | Async reply channels for the store actor (Tauri provides the runtime) |
 | `tempfile` | MIT OR Apache-2.0 | Atomic staging and tests (dev) |
 | `copyfie-core` | Proprietary (internal) | Models, store, search — not published |
 

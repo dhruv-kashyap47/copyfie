@@ -9,12 +9,21 @@
     identifier: string;
   };
 
+  type StoreStats = {
+    total: number;
+    text: number;
+    images: number;
+    files: number;
+  };
+
   let info = $state<AppInfo | null>(null);
+  let stats = $state<StoreStats | null>(null);
   let error = $state<string | null>(null);
 
   onMount(async () => {
     try {
       info = await invoke<AppInfo>("app_info");
+      stats = await invoke<StoreStats>("store_stats");
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
     }
@@ -35,8 +44,18 @@
         <div><dt>App</dt><dd>{info.name} {info.version}</dd></div>
         <div><dt>Core</dt><dd>{info.coreVersion}</dd></div>
         <div><dt>Bundle</dt><dd>{info.identifier}</dd></div>
+        <div>
+          <dt>Store</dt>
+          <dd>
+            {#if stats}
+              {stats.total} item{stats.total === 1 ? "" : "s"} · {stats.text} text · {stats.images} image · {stats.files} files
+            {:else}
+              connecting…
+            {/if}
+          </dd>
+        </div>
       </dl>
-      <p class="note">Milestone 1 scaffold — capture, palette, and paste land next.</p>
+      <p class="note">Milestone 1 scaffold — store actor is live; capture and the palette land next.</p>
     {:else if error}
       <p class="state state--error">Bridge unavailable</p>
       <p class="note">{error}</p>
@@ -116,6 +135,7 @@
 
   .meta dt {
     width: 56px;
+    flex: none;
     color: var(--fg-muted);
   }
 
