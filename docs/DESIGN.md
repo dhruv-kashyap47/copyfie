@@ -1,162 +1,156 @@
-# Copyfie — Liquid Glass Design Spec (simplified)
+# Copyfie — quiet macOS design spec (v2)
 
-Status: **approved direction** (MR-01). CSS-only refresh; no native materials, no SVG
-refraction, no new settings, no component library.
+Status: implemented (MR-05…MR-08). Svelte + plain CSS only. No new runtime dependencies,
+no `backdrop-filter`, no gradients, no palette logo, one system-blue accent.
 
-## 1. Principles
+## 1. Window edge fix
 
-Liquid Glass is a **functional layer**, not a background. Copyfie uses one glass-style shell
-around one mostly solid content well. History text never sits on the translucent rim.
+**Root cause found:** the thin square outline was not the CSS shell. It was Windows DWM
+drawing a 1 px border around the rectangular 680 × 480 transparent window, plus the native
+window shadow (`shadow(true)`). The old shell also had an inset highlight and an inner border,
+which read as a second ring inside the CSS edge.
 
-- **One shell, one well.** The shell is a gradient/alpha frame; every row, field, chip and
-  footer lives on the well.
-- **No `backdrop-filter`.** In a transparent Tauri window it cannot blur the desktop, and with
-  `--disable-gpu` it would cost CPU for no visible gain. The material comes from gradient,
-  alpha, a 1 px border, a bright top inset and layered shadows only.
-- **No glass on glass.** The well, controls, selected row and toasts are solid/tinted layers.
-- **Readability first.** Body text sits on a 92–96 % opaque well and meets 4.5:1. UI edges and
-  the selected bar meet 3:1.
-- **Group, don't scatter.** Filters share one track; hints share one footer; no floating pills.
-- **Concentric radii.** Outer 24 px; every inset subtracts its padding (well 16, row 10,
-  control 10, small 8).
-- **Motion is optional and short.** Only `transform` and `opacity`, under 160 ms. Paste and
-  search never wait for an animation.
-- **Settings is a document.** Solid surface, native titlebar, no glass body. Tray stays native.
-  Toasts stay solid.
+**Fix, in order:**
 
-## 2. Surface map
+1. `transparent(true)`, `decorations(false)`, **`shadow(false)`**.
+2. WebView/page backgrounds transparent (`html`, `body`, `#app`), no full-window paint.
+3. 24 px transparent margin inside the window; the CSS shell is 632 × 432.
+4. `DwmSetWindowAttribute(DWMWA_BORDER_COLOR, DWMWA_COLOR_NONE)` removes the DWM border.
+5. `DwmSetWindowAttribute(DWMWA_WINDOW_CORNER_PREFERENCE, DWMWCP_DONOTROUND)` stops DWM
+   rounding the window rectangle; the CSS shell owns the only radius.
+6. Removed the redundant transparent `background_color` call; kept `no_redirection_bitmap`
+   to avoid the white flash.
+7. One CSS hairline edge, no inset highlight, no inner border. One shadow.
 
-| Surface | Material |
+Verified over white, black, and a busy photo wallpaper: no rectangle, no clipped corner,
+single rounded shell. The Settings window remains a normal solid native window.
+
+## 2. Tokens
+
+Flat colour, one accent, one hairline, one shadow. All values in `src/styles/tokens.css`.
+
+| Token | Light | Dark |
+|---|---|---|
+| `--surface` | `#FFFFFF` | `#1C1C1E` |
+| `--surface-2` | `#F2F2F7` | `#2C2C2E` |
+| `--text` | `#1D1D1F` | `#F5F5F7` |
+| `--text-2` | `#6E6E73` (AA-tuned) | `rgba(235,235,245,.62)` |
+| `--separator` | `rgba(60,60,67,.12)` | `rgba(255,255,255,.08)` |
+| `--edge` | `rgba(0,0,0,.10)` | `rgba(255,255,255,.12)` |
+| `--accent` | `#007AFF` | `#0A84FF` |
+| `--selection-bg` / `--selection-fg` | `#0060DF` / `#FFFFFF` | `#0A63E6` / `#FFFFFF` |
+| `--focus-ring` | `rgba(0,122,255,.40)` | `rgba(10,132,255,.40)` |
+| `--row-hover` | `rgba(60,60,67,.06)` | `rgba(255,255,255,.06)` |
+| `--shadow-shell` | `0 20px 48px -20px rgba(0,0,0,.20), 0 4px 12px -6px rgba(0,0,0,.10)` | `0 20px 48px -20px rgba(0,0,0,.58), 0 4px 12px -6px rgba(0,0,0,.30)` |
+| Radii | shell `14`, well/search `10`, row `8`, keycap `5` | same |
+
+Selection was darkened from the pure system blue until white text passes AA:
+light `#0060DF` = **5.62:1**, dark `#0A63E6` = **5.33:1**. Text is not reduced or faded.
+`--text-2` is `#6E6E73` in light rather than 60 % alpha, to keep body/meta text above 4.5:1.
+
+Switches, selected segments, scrollbar and toasts use the same token set; danger red is only
+used for destructive actions. No gradients, glows, or multi-layer borders.
+
+The shadow is slightly tighter than the first draft (`48px -20px` instead of `60px`) to keep
+software-rendered (`--disable-gpu`) paint cheap; it still reads as the same soft lift.
+
+## 3. Typography
+
+Stack: `-apple-system, BlinkMacSystemFont, "SF Pro Text", "Inter", "Segoe UI Variable Text",
+system-ui, sans-serif`. macOS gets the system SF stack; Windows/Linux get the bundled
+**Inter** Latin-subset variable WOFF2 (33 KB, SIL OFL 1.1). No Geist, no monospace font files.
+
+| Role | Size / weight |
 |---|---|
-| Palette shell | **Glass-style frame**: gradient + alpha, 1 px light border, bright top inset, two soft shadows |
-| Content well (search, filters, list, footer) | **Solid** `--well-bg`, 1 px `--well-border` |
-| Search field | Inset solid control |
-| Result rows | Transparent on the well |
-| Selected row | Accent tint + 1 px border + 3 px left bar (works with glass off) |
-| Filter chips | One segmented track; selected pill gets the accent tint |
-| Footer / future trial line | Solid band; trial line uses the accent tint |
-| Toasts | Solid high-contrast chip |
-| Hotkey-conflict overlay | Dim scrim + solid card |
-| Settings window | Solid document; native titlebar |
-| Tray menu | Native OS menu |
+| Search | 15 / 400 |
+| Row title | 13 / 500, single line, ellipsis, `-0.01em` |
+| Meta | 11 / 400, `--text-2`, tabular numbers |
+| Filter labels | 12 / 500 |
+| Footer hints | 11 / 400 |
+| Settings section labels | 12 / 500, `--text-2` |
+| Settings rows | 13 / 400 |
 
-## 3. Tokens
+Keycaps are small sans-serif chips (radius 5), not monospace. macOS shows `↵`, `⌘P`, `⎋`;
+Windows/Linux show `Enter`, `Ctrl+P`, `Esc`.
 
-All values live in `src/styles/tokens.css`; glass primitives live in `src/styles/glass.css`.
-Components use classes, not raw blur/shadow values.
+## 4. Palette layout
 
-| Group | Tokens |
-|---|---|
-| Surfaces | `--shell-top`, `--shell-bottom`, `--shell-border`, `--shell-highlight`, `--shell-inner`, `--shell-shadow`, `--well-bg`, `--well-border`, `--well-shadow` |
-| Controls | `--control-bg`, `--control-border`, `--control-hover`, `--field-bg`, `--track-bg` |
-| Text | `--fg`, `--fg-muted`, `--fg-subtle`, `--accent`, `--danger`, `--focus` |
-| Selection | `--row-hover`, `--row-selected`, `--row-selected-border`, `--selected-bar` |
-| Shape | `--radius-shell: 24px`, `--radius-well: 16px`, `--radius-row: 10px`, `--radius-control: 10px`, `--radius-sm: 8px` |
-| Spacing / type | `--space-1…6`, `--row-height: 52px`, rem type scale (11–20 px) |
-| Motion | `--dur-press: 90ms`, `--dur-state: 120ms`, `--dur-in: 140ms`, `--ease: cubic-bezier(.2,.8,.2,1)` |
+- **No logo.** Header is one full-width search field: 40 px high, `surface-2`, no border,
+  16 px Lucide search icon, placeholder “Search”, focus = 2 px accent-at-40 % ring.
+- **Filters:** one lightweight segmented track (`surface-2`, radius 8, no outer border).
+  Selected pill = `surface` + one soft 1 px shadow. All / Text / Images / Files / Pinned.
+- **Rows:** 44 px, no dividers, 2 px gap. Text rows have no icon; image/file rows use a
+  16 px Lucide stroke icon or a 34 × 28 rounded-8 thumbnail. Title is one line; meta is
+  `App · 5h` (type only for images/files). Pin is a small accent pin.
+  Index hints `1–9` are plain `--text-2` digits, no boxes.
+- **Selected row:** solid `--selection-bg` with white title/meta/icon/digit. No glass, no blur,
+  no left bar. Hover is a 6 % neutral fill.
+- **Footer:** one line, hints left, count right, `--text-2`, hairline top only.
+- **Scrollbar:** thin overlay, thumb only on list hover.
+- **Empty state:** one centered line + one-line hint, both `--text-2`.
 
-Light and dark values are defined with `:root[data-theme="light"]` and the
-`prefers-color-scheme: light` fallback. The shell stays a light material in light mode and a
-dark material in dark mode; the wallpaper never decides the theme.
+## 5. Settings
 
-**Curated accents per theme** (no accent picker):
+Solid `surface`, single column, max-width 480. Inset grouped list:
 
-- **Dark:** champagne `#D8B36A` on graphite — warm metallic light in the glass.
-- **Light:** cobalt `#1E5BD7` on cool white — crisp, Apple-like blue.
-- Focus ring, selected bar, pin icon and mark follow the theme accent. The stored `accent`
-  field remains for settings-file compatibility but no longer overrides the theme.
+- Section label 12/500 `--text-2`.
+- Group = `surface-2`, radius 10, hairline separators between rows, 44 px rows.
+- iOS-style toggles (44 × 26, accent when on, knob-only transform).
+- Segmented controls for theme and palette readiness; plain selects for longer choices;
+  plain recorder for the hotkey; red text button only for Clear history.
+- Header: settings wordmark at 28 px height (2x asset 56 px) plus version in `--text-2`.
+  High contrast replaces the raster wordmark with a text “Copyfie” fallback.
+- Conflict card, toasts and dialogs use the same solid surface, one hairline, radius 12.
 
-Key values:
+## 6. Logo mapping
 
-- Dark shell: `linear-gradient(160deg, rgba(43,52,66,.76), rgba(11,15,21,.88))`; well
-  `rgba(10,13,18,.94)`.
-- Light shell: `linear-gradient(160deg, rgba(255,255,255,.84), rgba(244,247,252,.92))`; well
-  `rgba(255,255,255,.96)`.
-- Border: `rgba(255,255,255,.22)` dark / `rgba(17,23,34,.14)` light.
-- Top highlight: inset `0 1px 0` at `rgba(255,255,255,.52)` dark / `.95` light.
-- Shadow: `0 24px 48px -24px` plus `0 4px 12px -6px`, low alpha.
-- Selected row: theme-accent tint, `inset 0 0 0 1px` border, `inset 3px 0 0` bar.
+Source folder `logo/` copied into `assets/logo/` (never edited):
 
-## 4. CSS technique
+| Source | Size | Role | Shipped/derived |
+|---|---|---|---|
+| `app-icon.png` | 1254 × 1254 | App icon (exe/installer/taskbar), tray on Windows/Linux | `assets/logo/app-icon.png`; `tauri icon` → `src-tauri/icons/` |
+| `main-logo-1.png` | 2170 × 725 | Settings wordmark | `copyfie-wordmark-light.png` 182 × 56, 3.1 KB; `copyfie-wordmark-dark.png` 182 × 56, 3.9 KB; solid surface-colour backgrounds, text fallback in high contrast |
+| `main-logo-1.svg` | 3.8 MB base64 raster wrapper | Source only | not shipped |
+| `app-icon.png` | 1254 × 1254 | macOS tray template (derived) | `tray-template.png` 44 × 44, 433 B, `icon_as_template` |
 
-```css
-.glass-shell {
-  background: linear-gradient(160deg, var(--shell-top), var(--shell-bottom));
-  border: 1px solid var(--shell-border);
-  border-radius: var(--radius-shell);
-  box-shadow:
-    inset 0 1px 0 var(--shell-highlight),
-    inset 0 -1px 0 var(--shell-inner),
-    var(--shell-shadow);
-}
-.glass-well {
-  background: var(--well-bg);
-  border: 1px solid var(--well-border);
-  border-radius: var(--radius-well);
-  box-shadow: var(--well-shadow);
-}
-```
+The supplied set has **no dedicated tray asset**. Windows/Linux use the generated 32 px app
+icon (the “C” remains legible); macOS uses a derived monochrome silhouette and must be
+reviewed on a real menu bar. See `assets/logo/README.md`.
 
-The window is transparent and frameless, with an 8 px transparent margin inside the window so
-the shell radius and CSS shadow are visible. Native window shadow stays enabled. No pseudo
-elements are used for fake blur. The shell is only a frame: the well covers the content area.
+## 7. Accessibility
 
-## 5. Accessibility
+- Body/meta text ≥ 4.5:1; selected white-on-blue **5.62:1 light / 5.33:1 dark**; UI edges and
+  focus rings remain distinct.
+- `prefers-contrast: more` → pure black/white surfaces, 2 px edges, no shadows, text brand
+  fallback. Verified in Chromium.
+- `prefers-reduced-motion: reduce` → no toast/skeleton/press motion. Verified.
+- `prefers-reduced-transparency: reduce` → surfaces are already opaque; the query removes
+  shadows where the engine supports it. (Chromium’s emulation reports the feature but did not
+  apply the query in the test harness; actual OS behavior needs a macOS/Windows check.)
+- Keyboard behavior, listbox/option roles, `aria-activedescendant`, and focus handling are
+  unchanged. The selected row is visible without any effect.
 
-CSS media queries only; there is no in-app visual-effects setting.
+## 8. Performance (Windows, release, 10,004 items)
 
-- `prefers-reduced-transparency: reduce` → shell and well become fully opaque, shadows reduce.
-- `prefers-contrast: more` → solid surface, pure foreground/background, 2 px borders, no
-  alpha, no gradients. Selected row keeps its border and left bar.
-- `prefers-reduced-motion: reduce` → all animations/transitions removed.
-- Contrast targets: body/meta text ≥ 4.5:1; UI borders, focus ring and selected bar ≥ 3:1.
-- The selected row is identifiable without glass: tint + border + 3 px bar.
-- Keyboard behaviour, ARIA roles and focus handling are unchanged.
+| Metric | v1 (before) | v2 | Change |
+|---|---:|---:|---:|
+| Warm-open p95 | 47 ms (second pass 36) | **37 ms** (24 samples, max 50) | better |
+| Cold-open p95 | 394 ms (second pass 395) | **383 ms** (20 samples, max 383) | better; **above 380 warning** |
+| Warm RSS | 345.8 / 353.9 MB avg/max | **317.7 / 322.4 MB** | −28 MB avg |
+| Idle webview-destroyed RSS | 30.1 MB | **25.9 MB** | −4.2 MB |
+| Idle CPU hidden / visible | 0.08 / 0.64 % one core | **0.03 / 0.31 %** | lower |
+| JS+CSS gzipped | 35.5 KB | **42.6 KB** | +7.1 KB (settings wordmark PNGs inlined); still < 50 KB |
 
-## 6. Motion
+Cold open was borderline: early 10-run passes produced single outliers (415–449 ms). Reducing
+the cold bootstrap from 50 to 20 summaries and removing the redundant transparent
+`background_color` call brought p50 to **352.5 ms** and a stable 20-run p95 to **383 ms**.
+The gate (<400 ms) passes; the 380 ms watch line is flagged.
 
-- Press: `transform: scale(.98)`, 90 ms.
-- State changes: instant colour/border changes, no transition (colour is not animated).
-- No shell entrance animation: the palette appears immediately on cold and warm opens.
-- Toast: opacity + 4 px translate, 140 ms.
-- No shimmer; the loading skeleton uses an opacity pulse, disabled by reduced motion.
+## 9. Unverified / caveats
 
-## 7. Icons and assets
-
-- **Geist Sans** for the UI, self-hosted variable WOFF2 (SIL OFL 1.1). This is the premium
-  typeface; system fonts are fallback only. Keycap hints use the platform monospace stack.
-- Lucide paths only, copied into `src/lib/icons.ts` (search, x, text, image, files, pin).
-  Lucide is ISC; attribution is added to `THIRD_PARTY.md`/`NOTICE`.
-- No SF Pro, SF Symbols, Apple artwork or Figma assets.
-- No new npm dependencies; the font files are copied assets, not a package.
-
-## 8. Performance
-
-Baseline (M1-13, Windows, 10k items): warm open **37 ms p95**, cold open **390 ms p95**, warm
-RSS **342.8 MB avg / 345.5 MB max**, core **30.1 MB**.
-
-After the refresh, re-measure warm/cold open p95, warm total RSS and idle CPU. Gates: warm
-p95 **< 100 ms**, cold p95 **< 400 ms**, no meaningful RSS/CPU increase. No `backdrop-filter`,
-one shell, one well, no filter animation. If a gate fails, simplify shadows/gradients first.
-
-Measured after: warm **47 ms p95** (36 ms on a second pass), cold **394 ms p95** (395 ms on a
-second pass), warm RSS **345.8 MB avg / 353.9 MB max**, idle CPU **0.08%** hidden / **0.64%**
-visible (of one core). The first cold pass with font preloads was 405 ms; removing the preloads
-and dropping the second font/shell fade restored the gate. Details in `docs/PERF.md`.
-
-## 9. Out of scope (cut)
-
-Native window materials (Acrylic/Mica/vibrancy), SVG displacement/refraction, frame-time
-probes, lite-mode auto-detection, the "Visual effects", "Reduce transparency" and "Refraction"
-settings, Rust/settings changes, CI glass checks, and a `Glass*` component library. The existing
-Svelte components are restyled in place.
-
-## 10. Acceptance
-
-- [ ] `tokens.css` + `glass.css`; no `backdrop-filter`; no raw one-off blur values.
-- [ ] Palette shell/well, search, filters, selected row, footer and toast updated.
-- [ ] Settings solid; tray native; Lucide icons attributed; Geist Sans self-hosted.
-- [ ] Reduced transparency/contrast/motion media queries verified.
-- [ ] Light/dark screenshots over bright/dark wallpapers in `docs/design/`.
-- [ ] Warm/cold open, RSS and idle CPU measured; gates pass.
-- [ ] `npm run check`, `npm test`, `npm run build`, Rust checks still clean.
+- macOS and Linux not run here. DWM border removal is Windows-only; macOS/Linux still need a
+  real transparency, native titlebar, tray template and font-smoothing pass.
+- Windows 10 (DWM attributes unsupported) and mixed-DPI/multi-monitor were not exercised.
+- The busy wallpaper is an Unsplash photo used for visual QA only.
+- The macOS tray template is derived from the app icon; it is not an original supplied asset.
+- The selected fill is intentionally darker than the UI accent to protect text contrast.

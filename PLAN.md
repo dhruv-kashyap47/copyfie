@@ -864,13 +864,13 @@ Entitlement is `trial`, `active`, or `locked`. Rust returns it with every `palet
 
 ## Theming
 
-- CSS variables: `--bg`, `--bg-elevated`, `--fg`, `--fg-muted`, `--border`, `--accent`, `--row-hover`, `--row-selected`, `--danger`.
-- `data-theme="light|dark"` on `<html>`, set by an inline script from `localStorage` before first paint; reconcile with Rust.
+- CSS variables: `--surface`, `--surface-2`, `--text`, `--text-2`, `--separator`, `--edge`, `--accent`, `--selection-bg`, `--row-hover`, `--danger`.
+- `data-theme="light|dark"` on `<html>`, set before paint; reconcile with Rust.
 - Follow system via `prefers-color-scheme` and Tauri theme events.
-- One accent color from settings; validate contrast.
-- No blur/vibrancy in v1. `backdrop-filter` is inconsistent and can cost paint time. Use a near-opaque solid surface.
-- Windows: DWM caption color for the settings window; palette is frameless with `DWMWA_WINDOW_CORNER_PREFERENCE=ROUND`.
-- macOS: settings window uses native titlebar with `setTitlebarAppearsTransparent` and matching appearance; palette is a borderless floating panel.
+- One curated system-blue accent (`#007AFF` light / `#0A84FF` dark); no accent picker. Selected rows use a darker fill so white text stays AA.
+- No blur/vibrancy. `backdrop-filter` is inconsistent and costs paint time; use flat solid surfaces.
+- Windows: palette is transparent/frameless, 24 px margin, DWM border color none and `DWMWA_WINDOW_CORNER_PREFERENCE=DONOTROUND`; CSS owns the 14 px shell radius.
+- macOS: settings window uses native titlebar with matching appearance; palette is a borderless floating panel. Tray uses a template image.
 
 ## Accessibility and polish
 
@@ -1785,7 +1785,7 @@ All previously open questions are resolved in the **Decisions** table at the top
 | Gate | When | Owner action |
 |---|---|---|
 | **Proprietary `LICENSE` + EULA** | Before any binary distribution | Counsel-reviewed all-rights-reserved license, EULA, privacy policy, and refund policy. MIT notices remain intact. No copyleft headers. |
-| **Product identity** | Before v1.0 packaging/signing | Name is final (**Copyfie**). Verify `copyfie.app` availability/ownership, trademark conflicts, and GitHub/winget/Homebrew/package handles; then lock `com.copyfie.app`, accent color, and copyright line. |
+| **Product identity** | Before v1.0 packaging/signing | Name is final (**Copyfie**). Verify `copyfie.app` availability/ownership, trademark conflicts, and GitHub/winget/Homebrew/package handles; then lock `com.copyfie.app` and copyright line. |
 | **Naming clearance** | Before v1.0 packaging/signing | Domain secured, trademark search clean or name adjusted, and all handles reserved; a rename after packaging means new bundle id, installers, URLs, and a re-do of Paddle/notarization metadata. |
 | **Code signing / notarization** | Before charging money | Apple Developer ID + notarization; Windows code-signing certificate. Unsigned builds are beta-only and must say so; the one-line installers are not advertised until this gate passes. |
 | **Install + download path** | Before launch | One-liners work on clean VMs for every supported OS; `SHA256SUMS` + detached signature published; download page live with manual steps and uninstall commands; winget manifest and `copyfie/tap` cask accepted. |
@@ -1829,7 +1829,7 @@ No decision currently blocks **Milestone 1**. Milestone 1 may start once the use
 Nothing blocks Milestone 1. The name (**Copyfie**), architecture, RAM target, hotkey, scope trim, trial/limited-mode design, and deferred-work list are settled. The binding gates are:
 
 1. **Proprietary `LICENSE` + EULA** — before any binary distribution.
-2. **Naming clearance + branding** — verify `copyfie.app`, trademark conflicts, and GitHub/winget/Homebrew/package handles; then lock `com.copyfie.app`, accent color, and copyright line before packaging/signing.
+2. **Naming clearance + branding** — verify `copyfie.app`, trademark conflicts, and GitHub/winget/Homebrew/package handles; then lock `com.copyfie.app` and copyright line before packaging/signing.
 3. **RAM gate** - at M1 exit: per OS, core <40 MB, destroyed <60 MB, warm total within its measured budget, cold p95 <400 ms, warm p95 <100 ms. Windows recorded; macOS/Linux pending.
 4. **Pricing validation** — before launch; competitor scan and final price.
 5. **Paddle seller approval + license backend** — before charging money: approved seller account, working webhook/key service, test purchase and refund.

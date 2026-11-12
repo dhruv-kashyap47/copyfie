@@ -9,8 +9,9 @@ A fast, local-first clipboard manager for Windows, macOS, and Linux (X11).
 
 Milestone 1 (MVP) — text capture, hotkey palette, search, and paste.
 The current tree is the scaffold: Tauri shell, `copyfie-core` crate, CI, and
-attribution files. The palette and settings now use a CSS-only Liquid Glass
-refresh (see `docs/DESIGN.md`).
+attribution files. The palette and settings now use the quiet macOS-inspired
+flat UI described in `docs/DESIGN.md`: one system-blue accent, Inter on
+Windows/Linux, SF on macOS, and no palette logo.
 
 ## Development
 
@@ -53,8 +54,8 @@ lands in M1-09; this is intentional pre-warm behaviour, not a failed launch.
 Open with `Cmd/Ctrl+,`, the tray, or **Tray → Settings…**.
 
 - **Appearance:** theme (System / Light / Dark), applied live to both windows and
-  cached for instant paint. The accent is curated per theme — champagne in dark,
-  cobalt in light — so controls keep a consistent, legible look.
+  cached for instant paint. The UI uses one system-blue accent (no accent picker);
+  selected rows use a slightly darker blue so white text stays AA.
 - **Palette:** **Keep palette ready** — `Auto` (hybrid, default), `Always`, or
   `Never`; and for Auto, **Forget after** 5 / 10 / 30 minutes. Auto keeps the
   palette fast while you work and releases its ~340 MB WebView2 footprint after
@@ -99,7 +100,7 @@ cargo deny --config scripts/license/cargo-deny.toml check
 
 ## Docs
 
-- [`docs/DESIGN.md`](docs/DESIGN.md) — Liquid Glass redesign spec, tokens, tiers, a11y.
+- [`docs/DESIGN.md`](docs/DESIGN.md) — quiet macOS v2 spec, window-edge fix, tokens, logos, a11y.
 - [`docs/ARCHITECTURE.md`](docs/ARCHITECTURE.md) — components, flows, invariants, IPC.
 - [`docs/PLATFORMS.md`](docs/PLATFORMS.md) — support matrix and platform caveats.
 - [`docs/PRIVACY.md`](docs/PRIVACY.md) — what is stored, what is never read.

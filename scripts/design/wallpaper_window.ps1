@@ -1,5 +1,6 @@
 param(
-  [Parameter(Mandatory = $true)][string]$Image
+  [Parameter(Mandatory = $true)][string]$Image,
+  [switch]$TopMost
 )
 
 # Shows a borderless, full-work-area wallpaper plate behind the Copyfie window.
@@ -13,7 +14,9 @@ $form = New-Object System.Windows.Forms.Form
 $form.FormBorderStyle = [System.Windows.Forms.FormBorderStyle]::None
 $form.WindowState = [System.Windows.Forms.FormWindowState]::Maximized
 $form.ShowInTaskbar = $false
-$form.TopMost = $false
+# Keep the plate above unrelated desktop windows, but below the always-on-top
+# palette (which is shown after this form).
+$form.TopMost = $TopMost.IsPresent
 $form.BackColor = [System.Drawing.Color]::Black
 
 $picture = New-Object System.Windows.Forms.PictureBox

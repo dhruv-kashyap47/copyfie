@@ -199,3 +199,35 @@ Notes:
 - No shadow/gradient simplification was needed after the cold-path trims. Tier 2
   native materials and SVG refraction were cut by design.
 
+## Quiet macOS v2 — before/after
+
+Final Windows release, 10,004 items, same machine. The v1 column is the
+CSS-only glass refresh at `51fa421`; v2 is the flat quiet redesign.
+
+| Metric | v1 | v2 | Change |
+|---|---:|---:|---:|
+| Warm-open p95 | 47 ms (second pass 36) | **37 ms** (24 samples, max 50) | better |
+| Cold-open p95 | 394 ms (second pass 395) | **383 ms** (20 samples, max 383) | better; above 380 watch line |
+| Warm total RSS | 345.8 / 353.9 MB avg/max | **317.7 / 322.4 MB** | −28.1 MB avg |
+| Idle webview-destroyed RSS | 30.1 MB | **25.9 MB** | −4.2 MB |
+| Idle CPU, palette hidden | 0.08 % of one core | **0.03 %** | lower |
+| Idle CPU, palette visible | 0.64 % of one core | **0.31 %** | lower |
+| Idle CPU, webview destroyed | ~0 % | **0 %** | same |
+| JS+CSS gzipped | 35.5 KB | **42.6 KB** | +7.1 KB; < 50 KB |
+
+Cold open needed two trims:
+
+1. The first 10-run pass after the v2 layout was 385 ms p95, but later 10-run
+   passes produced single outliers (415–449 ms) and an unstable p95.
+2. Reducing the cold bootstrap from 50 to 20 summaries and removing the redundant
+   transparent `background_color` call moved p50 to **352.5 ms** and a 20-run
+   pass to **383 ms p95** (max 383). The <400 ms gate passes; the requested
+   380 ms watch line is flagged.
+
+Bundle detail: the settings page inlines the two quantized wordmark PNGs
+(3.1 KB light + 3.9 KB dark) into its JS; the palette JS/CSS is 16.9 + 14.5 KB
+raw. Inter is a 33 KB WOFF2 outside the JS/CSS budget. No new npm dependency.
+
+Measurement files: `open-latency-v2-cold20.json`, `rss-v2-final-warm.json`,
+`rss-v2-final-destroyed.json`, `cpu-v2-final-{hidden,visible,destroyed}.json`.
+

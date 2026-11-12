@@ -1,0 +1,200 @@
+﻿{
+    "capturedAt":  "2026-11-12T23:38:07.5304138+05:30",
+    "platform":  "windows",
+    "arch":  "AMD64",
+    "durationSeconds":  30,
+    "intervalSeconds":  2,
+    "samples":  15,
+    "totalMbMin":  25.9,
+    "totalMbAvg":  25.9,
+    "totalMbMax":  25.9,
+    "firstSample":  {
+                        "at":  "2026-11-12T23:37:36.4682004+05:30",
+                        "totalMb":  25.9,
+                        "processes":  [
+                                          {
+                                              "pid":  10896,
+                                              "name":  "copyfie.exe",
+                                              "mb":  25.9
+                                          }
+                                      ]
+                    },
+    "lastSample":  {
+                       "at":  "2026-11-12T23:38:05.5184309+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+    "series":  [
+                   {
+                       "at":  "2026-11-12T23:37:36.4682004+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:38.5777324+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:40.6560878+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:42.7237173+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:44.7870452+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:46.8593792+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:48.9275684+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:51.0124562+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:53.0898753+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:55.1621220+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:57.2355010+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:37:59.3004218+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:38:01.3765920+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:38:03.4439437+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   },
+                   {
+                       "at":  "2026-11-12T23:38:05.5184309+05:30",
+                       "totalMb":  25.9,
+                       "processes":  [
+                                         {
+                                             "pid":  10896,
+                                             "name":  "copyfie.exe",
+                                             "mb":  25.9
+                                         }
+                                     ]
+                   }
+               ]
+}

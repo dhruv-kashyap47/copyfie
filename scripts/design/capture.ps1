@@ -1,7 +1,9 @@
 param(
   [ValidateSet("light", "dark")][string]$Theme = "dark",
-  [ValidateSet("bright", "dark")][string]$Wallpaper = "bright",
+  [string]$Wallpaper = "bright",
   [ValidateSet("palette", "settings")][string]$Window = "palette",
+  [switch]$Empty,
+  [int]$SelectRow = 0,
   [Parameter(Mandatory = $true)][string]$Out,
   [string]$Exe = "target/release/copyfie.exe"
 )
@@ -61,7 +63,7 @@ try {
 
   $settings = Get-Content $settingsPath -Raw | ConvertFrom-Json
   $settings.theme = $Theme
-  $settings.accent = "#5B9DFF"
+  $settings.accent = "#007AFF"
   # Write UTF-8 without a BOM; serde_json rejects a BOM.
   [System.IO.File]::WriteAllText(
     $settingsPath,
@@ -69,11 +71,13 @@ try {
     [System.Text.UTF8Encoding]::new($false)
   )
 
-  $plate = Start-Process powershell -ArgumentList @(
+  $plateArgs = @(
     "-ExecutionPolicy", "Bypass",
     "-File", "scripts/design/wallpaper_window.ps1",
-    "-Image", (Resolve-Path (Join-Path "docs/design/wallpapers" "$Wallpaper.png")).Path
-  ) -PassThru -WindowStyle Hidden
+    "-Image", (Resolve-Path (Join-Path "docs/design/wallpapers" $(if (Test-Path (Join-Path "docs/design/wallpapers" "$Wallpaper.png")) { "$Wallpaper.png" } else { "$Wallpaper.jpg" }))).Path
+  )
+  if ($Window -eq "palette") { $plateArgs += "-TopMost" }
+  $plate = Start-Process powershell -ArgumentList $plateArgs -PassThru -WindowStyle Hidden
   Start-Sleep -Milliseconds 1200
   Start-Process -FilePath $Exe -ArgumentList "--show"
   Start-Sleep -Seconds 3
@@ -85,6 +89,13 @@ try {
   [CopyfieCaptureWin32]::keybd_event(0x11, 0, 2, [UIntPtr]::Zero)
   Invoke-Key 0x08 0
   Invoke-Key 0x24 0
+  if ($Empty) {
+    for ($i = 0; $i -lt 6; $i++) { Invoke-Key 0x5A 0 }
+    Start-Sleep -Milliseconds 700
+  } else {
+    for ($i = 0; $i -lt $SelectRow; $i++) { Invoke-Key 0x28 0 }
+    Start-Sleep -Milliseconds 250
+  }
   [CopyfieCaptureWin32]::SetCursorPos(8, 8) | Out-Null
   Start-Sleep -Milliseconds 500
 

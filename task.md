@@ -14,7 +14,7 @@ Legend:
 | `MX` | v1.x — deferred platform and packaging work (after v1.0) |
 | `M3` | v1.1 — snippets, OCR, custom themes, icons |
 | `M4` | v1.2 — optional encrypted folder sync |
-| `MR` | Requested UI refresh — Liquid Glass redesign (post-M1) |
+| `MR` | Requested UI refresh — quiet macOS v2 (post-M1) |
 
 Effort: **S** ≈ 1–3 days · **M** ≈ 1–1.5 weeks · **L** ≈ 2–3 weeks.
 
@@ -108,15 +108,19 @@ Effort: **S** ≈ 1–3 days · **M** ≈ 1–1.5 weeks · **L** ≈ 2–3 weeks
 - [ ] M4-06 Sync status UI, pause, conflict log, key rotation/revocation, “folder not available” handling (M) — deps: M4-04 — status: todo
 - [ ] M4-07 Security review + threat model (provider access, rollback, conflict oracles) (M) — deps: M4-04, M4-05, M4-06 — status: todo
 
-## MR — Liquid Glass redesign (requested, post-M1)
+## MR — quiet macOS v2 UI refresh (requested, post-M1)
 
 > The user requested this refresh explicitly. It does not change the v1.0 task order;
 > it may run before M2 work. Each task follows the normal commit/push rule.
 
 - [x] MR-01 Study references, simplify to CSS-only, rewrite `docs/DESIGN.md` (S) — deps: none — status: done
 - [x] MR-02 Tokens + `glass.css` + palette shell/well/search/filters/rows/footer/toast (M) — deps: MR-01 — status: done
-- [x] MR-03 Settings solid refresh, Geist/Lucide, reduced-transparency/contrast/motion CSS (M) — deps: MR-02 — status: done
+- [x] MR-03 Settings solid refresh, Inter/Lucide, reduced-transparency/contrast/motion CSS (M) — deps: MR-02 — status: done
 - [x] MR-04 Bright/dark screenshots, Windows before/after perf, docs + progress (S) — deps: MR-02, MR-03 — status: done
+- [x] MR-05 Remove native window border/shadow, add 24 px transparent margin, verify every edge (S) — deps: MR-04 — status: done
+- [x] MR-06 v2 flat macOS tokens, Inter subset, quiet palette layout, one system-blue accent (M) — deps: MR-05 — status: done
+- [x] MR-07 v2 settings grouped list, logo mapping, app/tray/settings assets (M) — deps: MR-06 — status: done
+- [x] MR-08 v2 screenshots (white/black/busy), perf before/after, docs + progress (S) — deps: MR-05, MR-06, MR-07 — status: done
 
 ---
 

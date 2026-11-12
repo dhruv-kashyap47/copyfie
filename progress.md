@@ -905,3 +905,122 @@ core. Full notes in `docs/PERF.md`.
 ### Next up
 
 - **Stop here per instruction.** Nothing further started.
+
+---
+
+## 2026-11-12 — Session 17 (MR-05…MR-08: quiet macOS v2)
+
+**Scope:** replace the champagne/cobalt glass look with a flat, quiet macOS/iOS
+system; fix the window rectangle/outline; use the supplied logo assets; add
+white/black/busy screenshots and final Windows measurements. No new runtime
+dependencies.
+
+### Done
+
+- **Window edges:** diagnosed the square outline as Windows DWM's 1 px border
+  around the rectangular 680 × 480 window plus the native `shadow(true)`; the
+  inner ring was the old inset-highlight/inner-border shell. Set `shadow(false)`,
+  `DWMWA_BORDER_COLOR = DWMWA_COLOR_NONE`, `DWMWA_WINDOW_CORNER_PREFERENCE =
+  DWMWCP_DONOTROUND`, kept the page transparent, and added a 24 px transparent
+  margin. Removed the redundant transparent `background_color` call; kept
+  `no_redirection_bitmap` for the white-flash guard. The shell is now a single
+  14 px rounded surface with one hairline and one soft shadow.
+- **Tokens:** rewrote `src/styles/tokens.css` for flat light/dark surfaces, one
+  system-blue accent, 4 px spacing, concentric radii (14/10/8/5), and the final
+  selection fills. No gradients, no `backdrop-filter`.
+- **Palette:** removed the logo badge; full-width 40 px search, lightweight
+  segmented filters, 44 px rows, no dividers/icon tiles, single-line titles,
+  quiet meta, plain index digits, hairline footer, overlay scrollbar, solid
+  selected row, rounded-8 image thumbs when available.
+- **Settings:** solid iOS/macOS grouped list with 10 px groups, hairline
+  separators, switches, segmented controls, plain hotkey recorder, header
+  wordmark + version. The conflict card/toast/dialog use the same tokens.
+- **Type:** removed Geist and monospace. Added a 33 KB Inter Latin-subset
+  variable WOFF2 (`@fontsource-variable/inter` source, subset with fontTools,
+  OFL). Stack is `-apple-system, BlinkMacSystemFont, "SF Pro Text", Inter, ...`.
+- **Logos:** inventoried `logo/` and copied the two PNG sources into
+  `assets/logo/`; the 3.8 MB SVG is a base64 raster wrapper and is source-only.
+  Generated platform icons with `tauri icon` from `app-icon.png`. Derived a
+  settings wordmark for light/dark (182 × 56, 3.1/3.9 KB, solid surface
+  backgrounds) and a 44 × 44 macOS tray template. No dedicated tray asset was
+  supplied; Windows/Linux use the generated 32 px app icon.
+- **Icons:** Lucide paths only, inline, 1.5 stroke, round caps.
+- **Screenshots:** 14 final captures in `docs/design/v2/`: palette/settings ×
+  light/dark × white/black/busy photo, plus selected-row and empty-state.
+  `scripts/design/capture.ps1` now supports `-Empty`, `-SelectRow`, and uses a
+  topmost wallpaper plate only for the palette (settings must stay non-topmost).
+
+### Decisions
+
+- **One accent, no picker.** System blue only. Selection is intentionally darker
+  than the accent: light `#0060DF` (5.62:1 with white), dark `#0A63E6` (5.33:1
+  with white). Text is not faded.
+- **Text-2 tuned for AA.** Light uses `#6E6E73` instead of the starting
+  `rgba(60,60,67,.60)` so 11 px meta text passes 4.5:1.
+- **No logo on the palette.** The supplied wordmark is used only in Settings.
+- **Flat surfaces.** The old glass is gone; there is no translucency to reduce.
+  `prefers-reduced-transparency` still removes shadows where supported.
+- **Cold path trimmed.** Reduced the injected cold bootstrap from 50 to 20
+  summaries and removed the redundant transparent `background_color`; this
+  moved cold p50 from ~403 ms to **352.5 ms** and the stable p95 to **383 ms**.
+- **Settings wordmark assets** use solid surface-coloured backgrounds (quantized
+  PNG) to stay under 8 KB; high contrast hides them in favour of a text brand.
+- **Perf trade-off:** the 60 px draft shadow was relaxed to `48px -20px` for
+  software-rendered paint; the look is still a soft lift.
+- **App icon/tray:** the supplied icon is legible at 32 px; the macOS template is
+  a derived silhouette and needs a real menu-bar review.
+
+### Verification
+
+- `npm run check` → 0 errors/warnings; `npm test` → **33 passed**.
+- `npm run build` + `npm run size:check` → **42.6 KB gzipped** JS+CSS (50 KB
+  budget). Inter WOFF2 (33 KB) and wordmark PNGs are outside the JS/CSS budget;
+  the two wordmarks are inlined into the settings chunk.
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D
+  warnings`, `cargo test --workspace` → clean; **111 tests**.
+- Edge verified over white, black, and a busy Unsplash photo: no square border,
+  no clipped corners, single rounded shell.
+- Contrast: body 15.8–18.0:1 dark / 16.4–18.0:1 light; muted 10.6–12.1 / 6.9–7.6;
+  meta light `#6E6E73` 5.3:1; selection 5.62/5.33:1. Control edges and focus are
+  visible; selected row is solid.
+- Media queries: `prefers-contrast: more` → pure black/white, 2 px edge, no
+  shadow; `prefers-reduced-motion` → no toast/skeleton/press motion. Chromium's
+  `prefers-reduced-transparency` emulation reports the feature but did not apply
+  the CSS query in the harness; the surfaces are already opaque, so the fallback
+  is inherently solid.
+- Screenshots are the real release window over deterministic wallpaper plates.
+
+### Measurements (Windows release, 10,004 items)
+
+| Metric | v1 | v2 |
+|---|---:|---:|
+| Warm-open p95 | 47 ms (second 36) | **37 ms** (24 samples, max 50) |
+| Cold-open p95 | 394 ms (second 395) | **383 ms** (20 samples, max 383) |
+| Warm total RSS | 345.8 / 353.9 MB avg/max | **317.7 / 322.4 MB** |
+| Idle webview-destroyed RSS | 30.1 MB | **25.9 MB** |
+| Idle CPU hidden / visible | 0.08 / 0.64 % one core | **0.03 / 0.31 %** |
+| Idle CPU destroyed | ~0 % | **0 %** |
+| JS+CSS gzipped | 35.5 KB | **42.6 KB** |
+
+Cold p95 is **above the 380 ms watch line** (383 ms) but below the 400 ms gate.
+The +7.1 KB bundle is the two inlined settings wordmark PNGs; still under 50 KB.
+
+### Unverified / caveats
+
+- **macOS/Linux:** not run. The DWM border fix is Windows-only; macOS/Linux still
+  need real transparency, native tray template, titlebar and font-smoothing
+  checks.
+- **Windows 10** ignores the DWM attributes; mixed-DPI/multi-monitor and
+  show/hide flicker were not frame-by-frame verified.
+- The macOS tray template is derived, not supplied; review at 16–22 px.
+- The busy wallpaper is an Unsplash photo used for visual QA only.
+- The selected fill is intentionally darker than the accent for AA.
+
+### Supersedes
+
+- This v2 section supersedes the v1 champagne/cobalt/Geist notes above; the
+  current UI is flat system blue with Inter (SF on macOS) and no palette logo.
+
+### Next up
+
+- **Stop here per instruction.** No new feature work.
