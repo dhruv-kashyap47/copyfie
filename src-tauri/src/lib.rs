@@ -47,7 +47,14 @@ pub fn run() {
             tauri_plugin_global_shortcut::Builder::new()
                 .with_handler(|app, _shortcut, event| {
                     if event.state() == ShortcutState::Pressed {
+                        let started = std::time::Instant::now();
                         let _ = commands::window::show_palette(app);
+                        // Rust-side open cost; first paint is measured separately.
+                        log::info!(
+                            target: "copyfie::window",
+                            "hotkey_to_show_us={}",
+                            started.elapsed().as_micros()
+                        );
                     }
                 })
                 .build(),

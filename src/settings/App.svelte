@@ -5,6 +5,7 @@
   import { isMacPlatform } from "../lib/format";
   import { chordFromEvent, formatAccelerator } from "../lib/hotkey";
   import {
+    clearHistory,
     settingsGet,
     settingsSave,
     type SettingsInput,
@@ -23,6 +24,8 @@
   let hotkey = $state("");
   let recording = $state(false);
   let pendingHotkey = $state<string | null>(null);
+  let clearPinned = $state(false);
+  let clearing = $state(false);
   let recorder = $state<HTMLDivElement | null>(null);
   let saving = $state(false);
   let status = $state<string | null>(null);
@@ -143,6 +146,30 @@
     }
   }
 
+  async function clearAll() {
+    const message = clearPinned
+      ? "Delete ALL history, including pinned items?"
+      : "Delete all unpinned history? Pinned items are kept.";
+    if (!window.confirm(message)) {
+      return;
+    }
+
+    clearing = true;
+    error = null;
+    try {
+      const removed = await clearHistory(!clearPinned);
+      status = `Cleared ${removed} item${removed === 1 ? "" : "s"}`;
+      if (statusTimer) {
+        clearTimeout(statusTimer);
+      }
+      statusTimer = setTimeout(() => (status = null), 2200);
+    } catch (cause) {
+      error = describe(cause);
+    } finally {
+      clearing = false;
+    }
+  }
+
   onMount(() => {
     void reload();
 
@@ -229,6 +256,17 @@
       <div class="row">
         <label for="paused">Pause capture</label>
         <input id="paused" type="checkbox" bind:checked={paused} onchange={persist} />
+      </div>
+      <div class="row">
+        <span class="label">Clear history</span>
+        <div class="clear-actions">
+          <label class="inline">
+            <input type="checkbox" bind:checked={clearPinned} /> include pinned
+          </label>
+          <button type="button" class="danger" disabled={clearing} onclick={() => void clearAll()}>
+            Clear…
+          </button>
+        </div>
       </div>
       <p class="hint">Pinned items are never deleted by retention.</p>
     </section>
@@ -462,6 +500,39 @@
     font-size: 11px;
     line-height: 1.5;
     color: var(--fg-muted);
+  }
+
+  .clear-actions {
+    display: flex;
+    align-items: center;
+    gap: 10px;
+  }
+
+  .inline {
+    display: flex;
+    align-items: center;
+    gap: 5px;
+    font-size: 11px;
+    color: var(--fg-muted);
+  }
+
+  .clear-actions .danger {
+    padding: 5px 10px;
+    border: 1px solid var(--border);
+    border-radius: 7px;
+    background: transparent;
+    color: var(--danger);
+    font-size: 11.5px;
+    cursor: pointer;
+  }
+
+  .clear-actions .danger:hover:not(:disabled) {
+    border-color: var(--danger);
+  }
+
+  .clear-actions .danger:disabled {
+    opacity: 0.5;
+    cursor: default;
   }
 
   .about p {
