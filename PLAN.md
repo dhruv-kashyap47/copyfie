@@ -1690,7 +1690,7 @@ Paddle’s built-in license keys are not sufficient (no clean 3-device/offline m
 | Type filters | All | **All + Text only** |
 | Paste/copy of visible items | Yes | **Yes** |
 | Pin/unpin, delete, block current app | Yes | **No** |
-| Settings | All tabs | **Only License, About, Privacy, Quit** |
+| Settings | All tabs | **Only License, About, Privacy, Quit, and Clear history** (the rest of Settings is visible but disabled) |
 | Hotkey, tray, autostart, single instance | Yes | **Yes** — configured values keep working; the tray always offers **Pause capture** and **Quit** |
 | Snippets, OCR, custom themes, folder sync | Yes | **No** |
 | Export/backup | Yes | **No** (data is not deleted; it is only hidden) |
