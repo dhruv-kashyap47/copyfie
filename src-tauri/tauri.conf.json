@@ -21,8 +21,11 @@
         "transparent": false,
         "alwaysOnTop": true,
         "skipTaskbar": true,
-        "visible": true,
+        "visible": false,
+        "focus": false,
         "center": true,
+        "shadow": true,
+        "additionalBrowserArgs": "--disable-background-timer-throttling --disable-renderer-backgrounding --disable-backgrounding-occluded-windows",
         "backgroundColor": "#0E0B14"
       }
     ],

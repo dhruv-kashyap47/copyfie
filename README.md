@@ -19,11 +19,23 @@ platform Tauri prerequisites.
 ```sh
 npm install          # frontend dependencies
 npm run dev          # Vite dev server on :1420
-npm run tauri dev    # full app in dev mode
+npm run tauri dev -- -- --show
 npm run build        # production frontend bundle
 npm run check        # svelte-check + TypeScript
 npm test             # vitest
 ```
+
+The palette window is created **hidden and pre-warmed** (as in production). Pass
+`--show` to the binary to display it at startup:
+
+```sh
+cargo run -p copyfie -- --show          # needs `npm run dev` running
+# or, through the Tauri CLI:
+npm run tauri dev -- -- --show
+```
+
+Without `--show`, the app runs with no visible window until the global hotkey
+lands in M1-09; this is intentional pre-warm behaviour, not a failed launch.
 
 Rust:
 

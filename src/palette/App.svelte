@@ -147,6 +147,8 @@
 
     let disposed = false;
     let unlisten: (() => void) | undefined;
+    let unlistenOpen: (() => void) | undefined;
+    let unlistenWindowFocus: (() => void) | undefined;
 
     listen("history:changed", () => {
       void refresh();
@@ -161,11 +163,37 @@
       }
     });
 
+    listen("palette:open", () => {
+      query = "";
+      filter = "all";
+      composing = false;
+      selected = 0;
+      toast = null;
+      void refresh();
+      requestAnimationFrame(() => {
+        document.getElementById("search-input")?.focus();
+      });
+    }).then((stop) => {
+      if (disposed) {
+        stop();
+      } else {
+        unlistenOpen = stop;
+      }
+    });
+
+    const onWindowFocus = () => {
+      document.getElementById("search-input")?.focus();
+    };
+    window.addEventListener("focus", onWindowFocus);
+    unlistenWindowFocus = () => window.removeEventListener("focus", onWindowFocus);
+
     window.addEventListener("keydown", onKeydown, true);
 
     return () => {
       disposed = true;
       unlisten?.();
+      unlistenOpen?.();
+      unlistenWindowFocus?.();
       window.removeEventListener("keydown", onKeydown, true);
       if (toastTimer) {
         clearTimeout(toastTimer);

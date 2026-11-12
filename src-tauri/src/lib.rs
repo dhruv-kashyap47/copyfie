@@ -38,6 +38,7 @@ pub fn run() {
             commands::history::history_clear,
             commands::paste::copy_item,
             commands::window::hide_palette,
+            commands::window::palette_show,
         ])
         .setup(|app| {
             let data_dir = app.path().app_data_dir()?;
@@ -59,6 +60,13 @@ pub fn run() {
             );
 
             app.manage(AppState::new(store, suppressor));
+
+            if std::env::args().any(|argument| argument == "--show") {
+                if let Err(error) = commands::window::show_palette(app.handle()) {
+                    log::error!(target: "copyfie::window", "could not show the palette: {error}");
+                }
+            }
+
             Ok(())
         })
         // Content-addressed thumbnails: copyfie://<hash>.png (macOS/Linux) and

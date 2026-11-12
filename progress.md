@@ -341,3 +341,48 @@ PLAN §7 lists `Ctrl+P`/`Ctrl+N` as arrow alternatives and also `Cmd/Ctrl+P` as 
 ### Next up
 
 - **M1-07** — pre-warm + show/focus + multi-monitor positioning.
+
+---
+
+## 2026-11-12 — Session 8 (Milestone 1, M1-07)
+
+**Scope:** M1-07 — pre-warm, show/focus, cursor-monitor positioning.
+
+### Done
+
+- **Hidden pre-warm:** the palette window is created `visible: false`, `focus: false` with `shadow: true`, skip-taskbar, always-on-top, opaque theme background (no white flash), plus Windows browser args that prevent renderer throttling while hidden.
+- **`show_palette`:** positions on the monitor under the cursor **before** showing, then shows, focuses, emits `palette:open` with a monotonic `open_id`, and logs the open.
+- **Positioning:** uses the cursor monitor's `work_area()` and physical pixels: horizontally centered, 18% down the work area. No manual DPI math — Tauri returns physical rects, so mixed-DPI monitors are handled by construction. Falls back to current/primary monitor.
+- **Windows focus:** `set_focus()` alone is blocked by the foreground lock when the window is shown programmatically. Added the plan's deterministic path: attach to the foreground thread's input queue → `BringWindowToTop` + `SetForegroundWindow` → detach. Non-Windows keeps `set_focus()`.
+- **`palette:open` handling:** the frontend clears query/filter/selection/toast, refreshes from the store, and refocuses the search input on every open. Window `focus` events also refocus the input.
+- **`--show` escape hatch:** shows the palette at startup for development and manual testing (also the planned manual show path for Wayland). Documented in the README. Without it, the app runs hidden/pre-warmed by design.
+
+### Verification
+
+- Launch **without** `--show`: process runs, `MainWindowTitle` empty, screenshot contains no palette, log shows `clipboard capture started`.
+- Launch with `--show`: palette appears centered on the primary monitor at ~18% height; `GetForegroundWindow() == palette hwnd` (**focused=True**).
+- Typed `Copyfie` with real synthetic keystrokes: the query value updated and the list narrowed to the 2 matching rows — keyboard focus lands in the search input on show.
+- Hidden pre-warm: the list was already populated the moment the window appeared (no DB wait in the open path).
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings`, `npm run check`, `npm test` → clean.
+
+### Decisions
+
+- **`--show` is an app argument, not a debug hack.** It doubles as the documented manual-show fallback for Wayland and for users whose hotkey is unavailable.
+- **Position before `show()`** and only once per open; no move-visible-window flicker.
+- **Force foreground only on user-triggered show**, with input-queue attachment scoped to the call and always detached.
+- **No `palette:shown` timing event yet**; open-time metrics land with the M1-11 harness.
+
+### Measurements
+
+- Hidden window: CPU idle during capture start (no polling beyond the OS watcher); no RSS measurement yet (M1-12).
+- Open path: list came from the already-rendered webview; no IPC wait observed.
+
+### Notes / follow-ups
+
+- Multi-monitor and mixed-DPI behaviour cannot be exercised on this single-monitor machine; add to the M1-13 manual matrix.
+- `palette:open` reset is wired but will get its real workout once M1-09 adds the hotkey.
+- The window still lacks DWM rounded corners on Windows (deferred to M1-09/tray polish or M2-21 packaging).
+
+### Next up
+
+- **M1-08** — paste orchestrator: hide, restore focus, write with suppression, synthesize paste.
