@@ -1,0 +1,12 @@
+[package]
+name = "copyfie-platform-linux"
+version.workspace = true
+edition.workspace = true
+publish = false
+description = "Linux X11 clipboard, foreground-app, and concealed-marker backend for Copyfie"
+
+[dependencies]
+copyfie-core = { path = "../../crates/copyfie-core", version = "0.1.0" }
+copyfie-platform = { path = "../common", version = "0.1.0", features = ["system-clipboard"] }
+thiserror = "2"
+x11rb = "0.14"

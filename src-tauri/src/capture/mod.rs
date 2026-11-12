@@ -23,6 +23,7 @@
 pub mod events;
 pub mod pipeline;
 pub mod privacy;
+pub mod runner;
 pub mod source_app;
 pub mod suppress;
 
@@ -34,6 +35,7 @@ pub use privacy::{
     matches_blocklist_entry, BlocklistEntry, CaptureConfig, GateDecision, Platform, PrivacyGate,
     SkipReason,
 };
+pub use runner::spawn_capture;
 pub use source_app::{basename, display_name};
 pub use suppress::Suppressor;
 

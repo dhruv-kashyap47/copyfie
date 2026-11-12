@@ -10,6 +10,11 @@
 use copyfie_core::SourceApp;
 use thiserror::Error;
 
+pub mod source_app;
+
+#[cfg(feature = "system-clipboard")]
+pub mod system;
+
 /// Clipboard formats available for the current change, with no payload read.
 #[derive(Debug, Clone, Copy, Default, PartialEq, Eq)]
 pub struct ClipboardProbe {

@@ -23,7 +23,8 @@ Every copied or adapted file carries a header such as:
 
 | Our file | Upstream repo | Upstream commit | License | What changed |
 |---|---|---|---|---|
-| _(none yet)_ | — | — | — | Scaffold only; no reference code has been copied at M1-01. |
+| `platform/macos/src/concealed.rs` | Ortu | v2.1.0 `b5747d3195fd2c52faf296d7489857499fc3021f` | MIT | Pasteboard marker list informed by Ortu's clipboard handling; implementation written from scratch. |
+| _(no copied code yet)_ | — | — | — | Windows/X11 backends are original; only prior-art ideas from PLAN §2 are used. |
 
 Reference projects and their pinned revisions used for study and adaptation:
 
@@ -52,9 +53,20 @@ copy of this file.
 | `blake3` | CC0-1.0 OR Apache-2.0 | Content hashing and dedupe identity |
 | `thiserror` | MIT OR Apache-2.0 | Error types |
 | `tokio` | MIT | Async reply channels for the store actor (Tauri provides the runtime) |
+| `log` | MIT OR Apache-2.0 | Diagnostics (never logs clipboard content) |
+| `tauri-plugin-log` | MIT OR Apache-2.0 | Log file + stdout, so capture failures are visible in release |
+| `clipboard-rs` | MIT | Clipboard watch/read on all desktop platforms (no image feature) |
+| `windows-sys` | MIT OR Apache-2.0 | Win32 foreground process, window title, clipboard format DWORDs |
+| `x11rb` | MIT OR Apache-2.0 | X11 `_NET_ACTIVE_WINDOW`, `_NET_WM_PID`, `WM_CLASS` |
+| `objc2` | MIT | Objective-C runtime bridge (macOS) |
+| `objc2-app-kit` | MIT | `NSWorkspace` / `NSRunningApplication` (macOS) |
+| `objc2-foundation` | MIT | `NSString` interop (macOS) |
 | `tempfile` | MIT OR Apache-2.0 | Atomic staging and tests (dev) |
 | `copyfie-core` | Proprietary (internal) | Models, store, search — not published |
 | `copyfie-platform` | Proprietary (internal) | Platform traits shared by OS backends — not published |
+| `copyfie-platform-windows` | Proprietary (internal) | Windows clipboard/foreground backend — not published |
+| `copyfie-platform-macos` | Proprietary (internal) | macOS clipboard/foreground backend — not published |
+| `copyfie-platform-linux` | Proprietary (internal) | Linux X11 clipboard/foreground backend — not published |
 
 ## 3. Direct JavaScript dependencies
 
@@ -73,7 +85,8 @@ copy of this file.
 
 - Allowed: **MIT, Apache-2.0, BSD-2-Clause, BSD-3-Clause, ISC, Zlib, CC0-1.0,
   Unlicense, Unicode-3.0** (Unicode License v3, OSI-approved; required by the
-  `icu_*` crates used for IDN handling).
+  `icu_*` crates used for IDN handling), **BSL-1.0** (Boost Software License,
+  OSI-approved; required by `clipboard-win`'s support crates).
 - Allowed for **unmodified dependencies only**: **MPL-2.0** (file-level
   copyleft). No MPL-2.0 code is copied into Copyfie source files.
 - Denied: **GPL, AGPL, LGPL (static linking), SSPL, BUSL, Commons Clause, and

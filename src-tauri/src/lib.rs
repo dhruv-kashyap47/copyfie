@@ -11,13 +11,22 @@ mod thumbs;
 
 pub mod capture;
 
+use std::sync::{Arc, RwLock};
+
 use tauri::Manager;
 
+use capture::privacy::CaptureConfig;
+use capture::suppress::Suppressor;
 use state::AppState;
 use store::StoreHandle;
 
 pub fn run() {
     let builder = tauri::Builder::default()
+        .plugin(
+            tauri_plugin_log::Builder::new()
+                .level(log::LevelFilter::Info)
+                .build(),
+        )
         .invoke_handler(tauri::generate_handler![
             commands::app_info,
             commands::history::store_stats,
@@ -28,7 +37,15 @@ pub fn run() {
             std::fs::create_dir_all(data_dir.join(thumbs::THUMBS_DIR))?;
 
             let database = copyfie_core::Database::open(data_dir.join("clipboard.db"))?;
-            app.manage(AppState::new(StoreHandle::spawn(database)));
+            let store = StoreHandle::spawn(database);
+
+            // Capture shares its config and suppression token with the rest of
+            // the app. They move into AppState when settings/paste land.
+            let config = Arc::new(RwLock::new(CaptureConfig::default()));
+            let suppressor = Arc::new(Suppressor::new());
+            capture::spawn_capture(app.handle().clone(), store.clone(), config, suppressor);
+
+            app.manage(AppState::new(store));
             Ok(())
         })
         // Content-addressed thumbnails: copyfie://<hash>.png (macOS/Linux) and

@@ -1,6 +1,7 @@
 <script lang="ts">
   import { onMount } from "svelte";
   import { invoke } from "@tauri-apps/api/core";
+  import { listen } from "@tauri-apps/api/event";
 
   type AppInfo = {
     name: string;
@@ -19,14 +20,44 @@
   let info = $state<AppInfo | null>(null);
   let stats = $state<StoreStats | null>(null);
   let error = $state<string | null>(null);
+  let captureEvents = $state(0);
 
-  onMount(async () => {
+  async function refreshStats() {
     try {
-      info = await invoke<AppInfo>("app_info");
       stats = await invoke<StoreStats>("store_stats");
     } catch (cause) {
       error = cause instanceof Error ? cause.message : String(cause);
     }
+  }
+
+  onMount(async () => {
+    try {
+      info = await invoke<AppInfo>("app_info");
+      await refreshStats();
+    } catch (cause) {
+      error = cause instanceof Error ? cause.message : String(cause);
+    }
+  });
+
+  onMount(() => {
+    let disposed = false;
+    let unlisten: (() => void) | undefined;
+
+    listen("history:changed", () => {
+      captureEvents += 1;
+      void refreshStats();
+    }).then((stop) => {
+      if (disposed) {
+        stop();
+      } else {
+        unlisten = stop;
+      }
+    });
+
+    return () => {
+      disposed = true;
+      unlisten?.();
+    };
   });
 </script>
 
@@ -54,8 +85,11 @@
             {/if}
           </dd>
         </div>
+        <div><dt>Events</dt><dd>{captureEvents} history change{captureEvents === 1 ? "" : "s"}</dd></div>
       </dl>
-      <p class="note">Milestone 1 scaffold — store actor is live; capture and the palette land next.</p>
+      <p class="note">
+        Copy text in any app and it appears here. Capture is X11-only on Linux in v1.0.
+      </p>
     {:else if error}
       <p class="state state--error">Bridge unavailable</p>
       <p class="note">{error}</p>

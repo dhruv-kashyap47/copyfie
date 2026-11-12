@@ -1,6 +1,13 @@
 [workspace]
 resolver = "2"
-members = ["src-tauri", "crates/copyfie-core", "platform/common"]
+members = [
+    "src-tauri",
+    "crates/copyfie-core",
+    "platform/common",
+    "platform/windows",
+    "platform/macos",
+    "platform/linux",
+]
 
 [workspace.package]
 version = "0.1.0"

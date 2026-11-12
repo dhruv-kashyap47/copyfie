@@ -231,3 +231,61 @@
 ### Next up
 
 - **M1-05** — platform text capture: Windows `WM_CLIPBOARDUPDATE`, macOS `changeCount` polling, Linux X11 XFixes; foreground app identity; concealed markers; runner wiring.
+
+---
+
+## 2026-11-12 — Session 6 (Milestone 1, M1-05)
+
+**Scope:** M1-05 — platform text capture on Windows, macOS, and Linux X11; foreground app identity; concealed markers; runner wiring.
+
+### Done
+
+- **Shared adapter (`platform/common/src/system.rs`):** `clipboard-rs` (0.3.5, `default-features = false`) powers watch/read on all three platforms. Two-phase `probe` (formats via `available_formats` + `has`) and `read_text`, a `ConcealedProbe` trait for OS-specific markers, and `SystemWatcher` which starts the watcher thread and **confirms startup** before returning (so failures are reported, not silent).
+- **Windows backend (`platform/windows`):** concealed detection for `ExcludeClipboardContentFromMonitorProcessing`, `ClipboardViewerIgnore`, `KeePassClipFormat`, `com.bitwarden.concealed`, plus DWORD-valued `CanIncludeInClipboardHistory`/`CanUploadToCloudClipboard` (present but `0` → concealed; unreadable → fail closed, 3×10 ms retries). Foreground app via `GetForegroundWindow` → PID → `QueryFullProcessImageNameW`, plus window title; friendly name from the exe stem.
+- **Linux X11 backend (`platform/linux`):** `x-kde-passwordManagerHint` presence detection (conservative — the value is not exposed by `clipboard-rs`), `_NET_ACTIVE_WINDOW` → `_NET_WM_PID` → `/proc/<pid>/comm`, `WM_CLASS` fallback, `_NET_WM_NAME` title, all over a short-lived `x11rb` connection. `is_wayland_session()` gate.
+- **macOS backend (`platform/macos`):** concealed/transient marker list (`org.nspasteboard.*`, 1Password, TypeIt4Me, etc.) and `NSWorkspace.frontmostApplication` (bundle id + localized name) via `objc2` 0.6. Window title intentionally omitted (needs Accessibility; that is paste-time, M1-08/M2-10).
+- **Runner (`src-tauri/src/capture/runner.rs`):** dedicated `copyfie-capture` thread selects the platform backend, builds the pipeline, and blocks on `wait_for_change`. Stored items log id/new (no content); skips log at debug; platform errors log at warn and back off 250 ms. On Wayland it logs a capability warning and does not attempt X11 capture.
+- **Logging:** `tauri-plugin-log` (Info) + `log`, so capture failures are visible in release builds without a console. No clipboard content is ever logged.
+- **Frontend proof:** the scaffold listens for `history:changed` and refreshes store stats, showing live capture and event coalescing.
+
+### Real end-to-end verification (Windows 11, this machine)
+
+1. Launched the app, copied `"Copyfie end-to-end capture test 2026-11-12"` → UI showed **1 item · 1 text**, **1 history change**; log: `clipboard capture started` + captured line.
+2. Copied a **concealed** item (Windows Forms `DataObject` with `ExcludeClipboardContentFromMonitorProcessing`) → **not stored** (still 1 item). Confirms the gate blocks before payload read.
+3. Re-copied the original text → still **1 item**, **2 history changes**: dedupe bumped the row and the palette was notified.
+4. Minimized Copyfie, copied from Windows Terminal → new row with `source_app_name = WindowsTerminal`, `source_app_id = C:\Program Files\WindowsApps\…\WindowsTerminal.exe`. Confirms foreground identity and background capture.
+5. DB inspection (Python sqlite3): row 1 text/preview correct, expiry `captured_at + 30 days`, `is_pinned = 0`.
+
+### Verification
+
+- `cargo test --workspace` → **90 passed** (40 app + 21 core unit + 18 core integration + 4 common + 3 Windows + 4 Linux).
+- `cargo check --workspace --all-targets` on Windows type-checks the **Linux X11 backend** too (`x11rb` is pure Rust); the macOS crate is cfg-gated and compiled by the macOS CI job.
+- `cargo fmt --all --check`, `cargo clippy --workspace --all-targets -- -D warnings` → clean.
+- `cargo deny` initially failed on **BSL-1.0** (`clipboard-win`'s support crates). Added BSL-1.0 to the allowlist (permissive, OSI-approved, closed-source compatible); policy is now all green.
+
+### Decisions
+
+- **One shared `clipboard-rs` adapter, per-OS specifics only.** Watch/read behaviour is identical across platforms; only concealed markers and foreground identity differ. Avoids three copies of the watcher code.
+- **File selections are skipped (`NoText`) until M2-05** rather than stored as path text, preserving the files → image → text payload priority.
+- **Windows value markers fail closed** if unreadable: better to skip a copy than store a password.
+- **KDE hint presence = concealed** on X11. Conservative, documented.
+- **Fresh X11 connection per capture** (~1 ms) instead of shared mutable state; source app is read only after the gate, so this is not on the hot path.
+- **Wayland does not start X11 capture.** The capability notice/copy-only UX is M2-12.
+- **`tauri-plugin-log` added now** (planned in §9) so capture failures are diagnosable in release; logs never include content.
+
+### Measurements
+
+- Test suite: **90 tests**, ~0.6 s.
+- E2E capture latency observed < 2 s including the test's fixed sleeps; real latency measurement is M1-11/M1-12.
+- Data dir now holds 2 captured rows; no RSS measurement yet.
+
+### Notes / follow-ups
+
+- macOS backend is written but **not compiled on this machine**. The CI `macos-14` job is the gate; if `objc2-app-kit` API details differ, fix there before M1-13.
+- Linux runtime behaviour (XFixes events, `/proc` lookup) is **not** exercised here; needs the Xvfb/Ubuntu CI job or a manual X11 run. Tracked for M1-13 acceptance.
+- Windows source-app attribution records whatever window is foreground at clipboard-change time; if Copyfie itself is focused, it records `copyfie.exe`. Paste writes are suppressed (M1-08), so this is cosmetic.
+- The runner keeps the `CaptureConfig`/`Suppressor` handles private until settings (M1-10) and paste (M1-08) need them.
+
+### Next up
+
+- **M1-06** — palette UI: Svelte shell, list, keyboard, filters, empty/error states.
