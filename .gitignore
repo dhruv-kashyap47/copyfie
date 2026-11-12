@@ -1,0 +1,74 @@
+# OS / editor
+.DS_Store
+Thumbs.db
+desktop.ini
+.idea/
+.vscode/
+*.swp
+*~
+
+# Node
+node_modules/
+dist/
+build/
+.vite/
+coverage/
+*.tsbuildinfo
+npm-debug.log*
+yarn-error.log*
+pnpm-debug.log*
+
+# Rust / Tauri
+target/
+**/target/
+*.rs.bk
+Cargo.lock.bak
+
+# Tauri build output
+src-tauri/gen/
+src-tauri/target/
+
+# Env and secrets — never commit
+.env
+.env.*
+!.env.example
+*.pem
+*.key
+*.p12
+*.pfx
+*.cer
+*.crt
+*.sig
+secrets/
+*.secret
+
+# Local state / databases / logs
+*.db
+*.db-wal
+*.db-shm
+*.sqlite
+*.sqlite3
+*.log
+logs/
+tmp/
+.tmp/
+*.tmp
+
+# Test and coverage artifacts
+test-results/
+playwright-report/
+.nyc_output/
+
+# OS packaging leftovers
+*.dmg
+*.msi
+*.exe
+*.app
+*.deb
+*.rpm
+*.AppImage
+
+# Editor/agent local state
+.copilot/
+.claude/
+.opencode/
