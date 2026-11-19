@@ -1,6 +1,6 @@
-# Copyfie
+<h1>Copyfie</h1>
 
-A fast, local-first clipboard manager for Windows, macOS, and Linux (X11).
+<h2>A fast, local-first clipboard manager for Windows, macOS, and Linux (X11).</h2>
 
 > Closed-source commercial product. This repository is private. See `NOTICE`
 > and `THIRD_PARTY.md` for attribution.
